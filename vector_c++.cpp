@@ -14,6 +14,8 @@
     #define $(x) ;
 #endif
 
+
+
 typedef int vec_t;
 
 
@@ -49,7 +51,6 @@ vec_t& Vector::operator[](int index)
 int main()
 {
 
-    //printf("\n\n\n");
 
     Vector v(5);
     v[0] = 14;
