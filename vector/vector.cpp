@@ -1,4 +1,5 @@
 #include <stdio.h>
+//#include <stdlib.h>
 
 
 #define MEOW ;
@@ -28,12 +29,13 @@ const vec_t BIRD = (vec_t)-1245666;
 class Vector
 {
     private:
-        vec_t *data_;
         int capacity_;
         int size_;
+        vec_t *data_;
     public:
         vec_t& operator[](int index);
         Vector(int cap);
+        Vector(const Vector &v);
        ~Vector();
         void resize(int cap);
         int capacity();
@@ -43,31 +45,34 @@ class Vector
         void push_back(vec_t val);
         vec_t pop_back();
         bool ok();
+        const Vector& operator=(Vector v);
+        void swap(Vector &v);
 };
 
 
 
 int main()
 {
-    Vector v(2);
-    v.push_back(1);
-    v.push_back(14);
-    v.push_back(11);
-    vec_t a = v.pop_back();
-    v.push_back(a);
-    v.push_back(v.back());
-    v.push_back(v.front());
-    v.push_back(a);
-    v.back() = v.front();
+    Vector v1(6);
+    v1.push_back(14);
+    v1.push_back(214);
+    v1.push_back(4);
+    v1.push_back(1);
 
+    Vector v2(v1);
+    Vector v3(2);
+    v3 = v1;
 
-    printf("%d\n\n", v.size());
+    for (int i = 0; i < v2.capacity(); i++)
+        printf("%d ", v2[i]);
+    printf("\n");
+    for (int i = 0; i < v3.capacity(); i++)
+        printf("%d ", v3[i]);
+    printf("\n\n");
 
-    while (v.size() > 0)
-        printf("%d\n", v.pop_back());
-
-    printf("\n%d\n", v.size());
-
+    //printf("%d %d %p\n", v1.capacity(), v1.size(), v1.data_);
+    //printf("%d %d %p\n", v2.capacity(), v2.size(), v2.data_);
+    //printf("%d %d %p\n", v3.capacity(), v3.size(), v3.data_);
 
     return 0;
 }
@@ -88,6 +93,25 @@ Vector::Vector(int cap):
     }
 
 //---------------------------------------------------------------------
+//! vector constructor with deep copy
+//!
+//! @param in [v]          prototype of creating vector
+//---------------------------------------------------------------------
+Vector::Vector(const Vector &v):
+    capacity_(v.capacity_),
+    size_(v.size_),
+    data_ ((new vec_t [v.capacity_ + 2] {}) + 1) //for canary
+    {
+        this->data_[v.capacity_] = BIRD;
+        this->data_[-1]           = BIRD;
+
+        for (int i = 0; i < this->capacity_; i++)
+            this->data_[i] = v.data_[i];
+
+        assert(ok());
+    }
+
+//---------------------------------------------------------------------
 //! resizes vector to "cap" size
 //!
 //! @param in [cap]          size of resizer vector
@@ -101,8 +125,10 @@ void Vector::resize(int cap)
         new_data[i] = this->data_[i];
 
     this->capacity_ = cap;
-    delete [] (this->data_ - 1);
+    delete [] (this->data_ - 1); //for canary
     this->data_ = new_data;
+    if (this->size_ > this->capacity_)
+        this->size_ = this->capacity_;
 
     this->data_[-1]  = BIRD;
     this->data_[cap] = BIRD;
@@ -170,12 +196,43 @@ vec_t& Vector::operator[](int index)
 }
 
 //---------------------------------------------------------------------
+//! makes the same vector as v (deep copy)
+//!
+//! @param in [v]          prototype of creating vector
+//!
+//! @returns link to vector
+//---------------------------------------------------------------------
+const Vector& Vector::operator=(Vector v)
+{
+    assert(ok());
+
+    swap(v);
+
+    assert(ok());
+    return *this;
+}
+
+//---------------------------------------------------------------------
 //! @returns link to last element from vector
 //---------------------------------------------------------------------
 vec_t& Vector::back()
 {
     assert(ok());
     return this->data_[this->size_ - 1];
+    assert(ok());
+}
+
+//---------------------------------------------------------------------
+//! sawps two vectors
+//---------------------------------------------------------------------
+void Vector::swap(Vector &v)
+{
+    assert(ok());
+
+    std::swap(this->size_, v.size_);
+    std::swap(this->data_, v.data_);
+    std::swap(this->capacity_, v.capacity_);
+
     assert(ok());
 }
 
