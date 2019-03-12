@@ -1,28 +1,7 @@
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 
-
-#define MEOW ;
-
-
-#ifdef MEOW
-    #include <iostream>
-    #define $(x) std::cout<<#x<<" = "<<(x)<<"\n";
-
-
-    #define assert( check )\
-        if(!(check))\
-        {\
-            printf("OOPS: %s in %s, line %d, function %s\n", #check, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
-            abort();\
-        }
-#else
-    #define $(x) ;
-    #define assert( check ) ;
-#endif
-
-
-typedef int vec_t;
+typedef long int vec_t;
 const vec_t BIRD = (vec_t)-1245666;
 
 
@@ -33,26 +12,62 @@ class Vector
         int size_;
         vec_t *data_;
     public:
-        vec_t& operator[](int index);
+        vec_t &operator[](int index);
         Vector(int cap);
         Vector(const Vector &v);
        ~Vector();
         void resize(int cap);
         int capacity();
         int size();
-        vec_t& front();
-        vec_t& back();
+        vec_t &front();
+        vec_t &back();
         void push_back(vec_t val);
         vec_t pop_back();
         bool ok();
-        const Vector& operator=(Vector v);
+        const Vector &operator=(Vector v);
         void swap(Vector &v);
 };
+
+
+#define MEOW ;
+
+
+#ifdef MEOW
+    const FILE* new_delete_file = fopen("new_delete", "w");
+    void* allocated_memory[100];
+    bool  allocated_memory_bool[100];
+    int   allocated_memory_size = 0;
+    #include "../renew/new_del_control.h"
+
+
+    #include <iostream>
+    #define $(x) std::cout<<#x<<" = "<<(x)<<"\n";
+
+
+    #define assert( check )\
+        if(!(check))\
+        {\
+            printf("OOPS: %s in %s, line %d, function %s\n", #check, __FILE__, __LINE__, __PRETTY_FUNCTION__);\
+            abort();\
+        }
+
+
+        #define new new (__FILE__, __PRETTY_FUNCTION__, __LINE__)
+#else
+    #define $(x) ;
+    #define assert( check ) ;
+#endif
+
+
+
 
 
 
 int main()
 {
+
+
+
     Vector v1(6);
     v1.push_back(14);
     v1.push_back(214);
@@ -63,17 +78,29 @@ int main()
     Vector v3(2);
     v3 = v1;
 
-    for (int i = 0; i < v2.capacity(); i++)
+    /*for (int i = 0; i < v2.capacity(); i++)
         printf("%d ", v2[i]);
     printf("\n");
     for (int i = 0; i < v3.capacity(); i++)
         printf("%d ", v3[i]);
-    printf("\n\n");
+    printf("\n\n");*/
 
     //printf("%d %d %p\n", v1.capacity(), v1.size(), v1.data_);
     //printf("%d %d %p\n", v2.capacity(), v2.size(), v2.data_);
     //printf("%d %d %p\n", v3.capacity(), v3.size(), v3.data_);
 
+    int* a = new int [4];
+    //delete [] a;
+
+    #ifdef MEOW
+        fprintf((FILE*)new_delete_file, "\nundeleted memory (at the end of main):\n");
+        for (int i = 0; i < allocated_memory_size; i++)
+            if (allocated_memory_bool[i])
+                fprintf((FILE*)new_delete_file, "%p, ", allocated_memory[i]);
+
+        fprintf((FILE*)new_delete_file, "\n\ndeleted memory (after the end of main) if file was closen in main this doesn't work:\n");
+        //fclose((FILE*)new_delete_file);
+    #endif
     return 0;
 }
 
@@ -85,7 +112,7 @@ int main()
 Vector::Vector(int cap):
     capacity_(cap),
     size_(0),
-    data_ (new vec_t [cap + 2] {} + 1) //for canary
+    data_(new vec_t [cap + 2] {} + 1) //for canary
     {
         this->data_[cap] = BIRD;
         this->data_[-1]  = BIRD;
@@ -271,6 +298,7 @@ int Vector::size()
 //---------------------------------------------------------------------
 bool Vector::ok()
 {
+    //printf("%d %d %p", size_, capacity_, data_);
     return (this != nullptr)
         && (size_ <= capacity_)
         && (capacity_ > 0)
@@ -278,6 +306,7 @@ bool Vector::ok()
         && (data_[-1]  == BIRD)
         && (data_[capacity_] == BIRD);
 }
+
 
 
 #undef assert
