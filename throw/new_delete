@@ -1,0 +1,17 @@
+0x5578f13ea0a0 new[]    used in: file ../vector/vector.h, function Vector::Vector(int), line 38
+0x5578f13eb570 new      used in: file my_excpt.cpp, function int func_2(Vector&), line 11
+0x5578f13eb5a0 new[]    used in: file my_excpt.h, function my_excpt::my_excpt(int, const char*, my_excpt*, int), line 26
+0x5578f13eb650 new      used in: file my_excpt.cpp, function int func_2(Vector&), line 18
+0x5578f13eb680 new[]    used in: file my_excpt.h, function my_excpt::my_excpt(int, const char*, my_excpt*, int), line 26
+0x5578f13eb6a0 new      used in: file my_excpt.cpp, function int func_1(Vector&), line 36
+0x5578f13eb6d0 new[]    used in: file my_excpt.h, function my_excpt::my_excpt(int, const char*, my_excpt*, int), line 26
+0x5578f13ea0a0 delete[] used
+0x5578f13eb6d0 delete[] used
+0x5578f13eb680 delete[] used
+0x5578f13eb5a0 delete[] used
+0x5578f13eb570 delete   used
+0x5578f13eb650 delete   used
+0x5578f13eb6a0 delete   used
+
+undeleted memory:
+

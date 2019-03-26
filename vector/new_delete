@@ -1,14 +1,14 @@
-0x55c8aef8d0a0 new[]    used in: file vector.cpp, function Vector::Vector(int), line 115
-0x55c8aef8e100 new[]    used in: file vector.cpp, function Vector::Vector(const Vector&), line 130
-0x55c8aef8e150 new[]    used in: file vector.cpp, function Vector::Vector(int), line 115
-0x55c8aef8e180 new[]    used in: file vector.cpp, function Vector::Vector(const Vector&), line 130
-0x55c8aef8e150 delete[] used
-0x55c8aef8e1d0 new[]    used in: file vector.cpp, function int main(), line 92
+0x55d1d1e6d0a0 new[]    used in: file vector.cpp, function Vector::Vector(int), line 112
+0x55d1d1e6e0d0 new[]    used in: file vector.cpp, function void Vector::resize(int), line 147
+0x55d1d1e6d0a0 delete[] used
+0x55d1d1e6d0a0 new[]    used in: file vector.cpp, function Vector::Vector(const Vector&), line 127
+0x55d1d1e6e0f0 new[]    used in: file vector.cpp, function Vector::Vector(int), line 112
 
-undeleted memory (at the end of main):
-0x55c8aef8d0a0, 0x55c8aef8e100, 0x55c8aef8e180, 0x55c8aef8e1d0, 
 
-deleted memory (after the end of main) if file was closen in main this doesn't work:
-0x55c8aef8e180 delete[] used
-0x55c8aef8e100 delete[] used
-0x55c8aef8d0a0 delete[] used
+deleted memory after the end of main:
+0x55d1d1e6e0f0 delete[] used
+0x55d1d1e6d0a0 delete[] used
+0x55d1d1e6e0d0 delete[] used
+
+undeleted memory:
+

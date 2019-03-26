@@ -1,0 +1,11 @@
+0x5647580750a0 new      used in: file stack.h, function Stack::Stack(int), line 29
+0x5647580760d0 new[]    used in: file ../vector/vector.h, function Vector::Vector(int), line 38
+0x5647580760f0 new[]    used in: file ../vector/vector.h, function void Vector::resize(int), line 73
+0x5647580760d0 delete[] used
+0x564758076110 new[]    used in: file ../vector/vector.h, function void Vector::resize(int), line 73
+0x5647580760f0 delete[] used
+0x564758076110 delete[] used
+0x5647580750a0 delete   used
+
+undeleted memory:
+
