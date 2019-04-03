@@ -34,7 +34,7 @@ my_excpt::my_excpt(int err, const char *text, my_excpt *reason, int line):
 //---------------------------------------------------------------------
 my_excpt::~my_excpt()
 {
-    delete [] this->text_; //for canary
+    delete [] this->text_;
     this->text_ = nullptr;
     if (this->reason_ != nullptr)
         delete this->reason_;
