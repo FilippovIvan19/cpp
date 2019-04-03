@@ -46,12 +46,20 @@ class Vector<bool>
 const int max_bit_num = 8 * sizeof(int) - 1;
 
 
+//---------------------------------------------------------------------
+//! constructor
+//!
+//! @param in [v]          pointer to vector that this class belongs to
+//---------------------------------------------------------------------
 bool_vect_class::bool_vect_class(Vector<bool> *v):
     int_index_(-1),
     bit_num_(-1),
     v_(v)
     {}
 
+//---------------------------------------------------------------------
+//! destructor
+//---------------------------------------------------------------------
 bool_vect_class::~bool_vect_class()
 {
     int_index_ = -1;
@@ -59,12 +67,21 @@ bool_vect_class::~bool_vect_class()
     v_ = nullptr;
 }
 
+
+//---------------------------------------------------------------------
+//! needed to returning v[i] in bool vector
+//---------------------------------------------------------------------
 bool_vect_class::operator bool()
 {
     int int_val = this->v_->data_[this->int_index_];
     return int_val & (1 << (max_bit_num - this->bit_num_));
 }
 
+//---------------------------------------------------------------------
+//! adapts "v[i] = val" for bool vector
+//!
+//! @param in [bit]          same as val in "v[i] = val"
+//---------------------------------------------------------------------
 void bool_vect_class::operator= (bool bit)
 {
     int int_val = this->v_->data_[this->int_index_];
