@@ -1,0 +1,5 @@
+0x55b68f52d0a0 new[]    used in: file vector_+bool.h, function Vector<bool>::Vector(int), line 105
+0x55b68f52d0a0 delete[] used
+
+undeleted memory:
+
