@@ -3,313 +3,141 @@
 #include <stdio.h>
 #include <math.h>
 #include <queue>
+#include <unistd.h>
 
-const float PI = 3.1415926535;
-const float MIN_SPEED = 30;
+//can be changed
+const int DEATH_DOT_COUNT = 50;
+const float SPEED_ADDITION = 0.3;
+const float ANGLE_ADDITION = 0.4;
+const float DOT_SPRITE_SIZE = 18;
+const float DOT_PICTURE_SIZE = 600;
+const float BIKE_SPRITE_HEIGHT = 300;
+const float BIKE_PICTURE_HEIGHT = 650;
+const float BIKE_PICTURE_WIDTH = 400;
+const float MAX_TIME_FROM_LAST_JUMP = 0.3;
+const float MIN_SPEED = 0;
 const float MAX_SPEED = 300;
+const float WINDOW_WIDTH = 1600;
+const float WINDOW_HEIGHT = 900;
+const float BIKE_ANIMATION_DELTA = 0.6;
 
 
+//don't change
+const float BIKE_ORIGIN_WIDTH_COEFFICIENT = 0.5;
+const float BIKE_ORIGIN_HEIGHT_COEFFICIENT = 0.7;
+
+#include "lib/common_elements.h"
+#include "lib/death_dot.h"
+#include "lib/motorbike_strip.h"
+#include "lib/motorbike.h"
+#include "lib/game_manager.h"
+
+//don't change
+const int  RED_BIKE_DIED = 1;
+const int BLUE_BIKE_DIED = 2;
+const float EPS = 0.0001;
 
 
-float distance(float x1, float y1, float x2, float y2)
+void input_processing(sf::RenderWindow *window_ptr, sf::Event *event_ptr, 
+    motorbike *red_bike_ptr, motorbike *blue_bike_ptr)
 {
-    return sqrt( (x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2) );
-}
+    //red bike movement and animation
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+        red_bike_ptr->speed_ += SPEED_ADDITION;
 
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+        red_bike_ptr->speed_ -= SPEED_ADDITION;
 
-
-class common_elements
-{
-public:
-    common_elements(sf::RenderWindow *window, float x0, float y0, sf::Sprite sprite);
-    common_elements();
-   ~common_elements();
-
-    float x_;
-    float y_;
-    float speed_angle_;
-    float speed_;
-    sf::Sprite sprite_;
-    sf::RenderWindow *window_ptr_;
-
-    virtual void draw();
-    virtual void move(float dt);
-};
-
-common_elements::common_elements(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite sprite):
-    x_(x0),
-    y_(y0),
-    speed_angle_(0),
-    speed_(0),
-    sprite_(sprite),
-    window_ptr_(window_ptr)
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        this->sprite_.setPosition(x0, y0);
+        red_bike_ptr->speed_angle_ += ANGLE_ADDITION;        
+        red_bike_ptr->frame_y_ = 1;
     }
 
-common_elements::common_elements():
-    x_(0),
-    y_(0),
-    speed_angle_(0),
-    speed_(0),
-    sprite_(sf::Sprite()),
-    window_ptr_(nullptr)
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        this->sprite_.setPosition(0, 0);
-    }
-
-common_elements::~common_elements()
-{}
-
-void common_elements::draw()
-{
-    this->window_ptr_->draw(this->sprite_);
-}
-
-void common_elements::move(float dt)
-{
-    float speed_x_ = this->speed_ * sin(this->speed_angle_ * PI / 180);
-    float speed_y_ = this->speed_ * -cos(this->speed_angle_ * PI / 180);
-
-    this->x_ += speed_x_ * (dt / 1000000);
-    this->y_ += speed_y_ * (dt / 1000000);
-
-    this->sprite_.setPosition(this->x_, this->y_);
-}
-
-
-
-
-
-
-
-class death_dot: public common_elements
-{
-public:
-    death_dot(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite sprite);
-    death_dot();
-   ~death_dot();
-
-   bool visibility_;
-
-   void jump(float x, float y);
-   virtual void draw(); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-   virtual void move(float dt); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-};
-
-death_dot::death_dot(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite sprite):
-    common_elements(window_ptr, x0, y0, sprite),
-    visibility_(false)
-    {
-        this->sprite_.setOrigin
-            (this->sprite_.getLocalBounds().width  / 2, 
-             this->sprite_.getLocalBounds().height / 2);
-
-        this->sprite_.setPosition(x0, y0);
-        this->sprite_.setScale(0.05, 0.05);
-    }
-
-death_dot::death_dot():
-    common_elements(),
-    visibility_(false)
-    {
-        this->sprite_.setOrigin
-            (this->sprite_.getLocalBounds().width  / 2, 
-             this->sprite_.getLocalBounds().height / 2);
-
-        this->sprite_.setPosition(0, 0);
+        red_bike_ptr->speed_angle_ -= ANGLE_ADDITION;        
+        red_bike_ptr->frame_y_ = 2;
     }
 
 
-death_dot::~death_dot()
-{}
+    //blue bike movement and animation
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)
+            || event_ptr->type == sf::Event::MouseWheelScrolled
+            && event_ptr->mouseWheelScroll.delta > 0)
+        blue_bike_ptr->speed_ += SPEED_ADDITION;
 
-void death_dot::jump(float x, float y)
-{
-    this->x_ = x;
-    this->y_ = y;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)
+            || event_ptr->type == sf::Event::MouseWheelScrolled
+            && event_ptr->mouseWheelScroll.delta < 0)
+        blue_bike_ptr->speed_ -= SPEED_ADDITION;
 
-    this->sprite_.setPosition(x, y);
-
-    //printf("jump\n");
-}
-
-void death_dot::move(float dt)
-{}
-
-void death_dot::draw()
-{
-    if (this->visibility_)
-        this->common_elements::draw();
-}
-
-
-
-
-
-
-class motorbike_strip: public common_elements
-{
-public:
-    motorbike_strip(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite sprite, int len);
-   ~motorbike_strip();
-
-    int len_;
-    bool lengthened_;
-    std::vector<death_dot> dots_;
-    // int last_dot_num_;
-    // int first_dot_num_;
-    float time_from_last_jump_;
-    std::queue<int> invisible_dots_;
-    std::queue<int> visible_dots_;
-
-    void move(float dt, float x, float y);
-    virtual void move(float dt); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-    virtual void draw(); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-};
-
-motorbike_strip::motorbike_strip(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite sprite, int len):
-    common_elements(window_ptr, x0, y0, sprite),
-    len_(len),
-    time_from_last_jump_(0),
-    lengthened_(false),
-    dots_( std::vector<death_dot>(len * 2) ),
-    visible_dots_( std::queue<int>() ),
-    invisible_dots_( std::queue<int>() )/*,
-    last_dot_num_(0),
-    first_dot_num_(0)*/
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::SemiColon)
+            || sf::Mouse::isButtonPressed(sf::Mouse::Right))
     {
-        for (int i = 0; i < len * 2; ++i)
-            this->dots_[i] = death_dot(window_ptr, x0, y0, sprite);
-
-        this->dots_[0].visibility_ = true;
-        this->visible_dots_.push(0);
-
-        for (int i = 1; i < len; ++i)
-            this->invisible_dots_.push(i);
-
+        blue_bike_ptr->speed_angle_ += ANGLE_ADDITION;        
+        blue_bike_ptr->frame_y_ = 1;
     }
 
-motorbike_strip::~motorbike_strip()
-{}
-
-void motorbike_strip::draw()
-{
-    int dot_count = this->len_;
-    for (int i = 0; i < dot_count; ++i)
-        this->dots_[i].draw();
-}
-
-
-void motorbike_strip::move(float dt)
-{}
-
-void motorbike_strip::move(float dt, float x, float y)
-{
-    //////////////////////////////////////////////////////////////////////////////////////
-    this->time_from_last_jump_ += dt;
-
-    if (this->time_from_last_jump_ / 1000000 >= 0.3)
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)
+            || sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
-        this->time_from_last_jump_ = 0;
-
-        if (this->visible_dots_.size() > 1)
-        {
-            int dot_num = this->visible_dots_.front();
-            this->visible_dots_.pop();
-            this->dots_[dot_num].visibility_ = false;
-
-            this->invisible_dots_.push(dot_num);
-            //this->last_dot_num_  =  ++this->last_dot_num_ % this->len_;
-        }
-
+        blue_bike_ptr->speed_angle_ -= ANGLE_ADDITION;        
+        blue_bike_ptr->frame_y_ = 2;
     }
 
-    int num = this->visible_dots_.back();
-    if (30 <= distance(x, y,
-        this->dots_[num].x_, this->dots_[num].y_))
-    {
-        if (!this->invisible_dots_.empty())
-        {
-            int dot_num = this->invisible_dots_.front();
-            this->invisible_dots_.pop();
-            this->dots_[dot_num].visibility_ = true;
+    //returning to default animation
+    if (event_ptr->type == sf::Event::KeyReleased
+            && (event_ptr->key.code == sf::Keyboard::K || event_ptr->key.code == sf::Keyboard::SemiColon)
+            || event_ptr->type == sf::Event::MouseButtonReleased
+            && (event_ptr->mouseButton.button == sf::Mouse::Right || event_ptr->mouseButton.button == sf::Mouse::Left))
+        blue_bike_ptr->frame_y_ = 0;
 
-            this->visible_dots_.push(dot_num);
-            this->dots_[dot_num].jump(x, y);
-        }
-        else
-        {
-            int dot_num = this->visible_dots_.front();
-            this->visible_dots_.pop();
-
-            this->visible_dots_.push(dot_num);
-            this->dots_[dot_num].jump(x, y);
-        }
-    }
-
-
-
-
-    //this->first_dot_num_ = this->last_dot_num_;
-}
-
-
-
-
-
-
-class motorbike: public common_elements
-{
-public:
-    motorbike(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite bike_sprite, sf::Sprite dot_sprite, int strip_len);
-   ~motorbike();
-
-    virtual void move(float dt); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-    //virtual void draw(); //всё работает и без virtual ->??????????????!!!!!!!!!!!
-
-    motorbike_strip strip_;
-};
-
-motorbike::motorbike(sf::RenderWindow *window_ptr, float x0, float y0, sf::Sprite bike_sprite, sf::Sprite dot_sprite, int strip_len):
-    common_elements(window_ptr, x0, y0, bike_sprite),
-    strip_(window_ptr, x0, y0, dot_sprite, strip_len)
-    {
-        this->sprite_.setOrigin
-            (this->sprite_.getLocalBounds().width / 2, 
-             this->sprite_.getLocalBounds().height * 0.7);
-
-        this->sprite_.setScale(0.2, 0.2);
-        this->speed_ = MIN_SPEED;
-    }
-
-motorbike::~motorbike()
-{}
-
-void motorbike::move(float dt)
-{
-    if (this->speed_ > MAX_SPEED)
-        this->speed_ = MAX_SPEED;
-    if (this->speed_ < MIN_SPEED)
-        this->speed_ = MIN_SPEED;
-
-    this->common_elements::move(dt);
-
-    this->sprite_.setRotation(speed_angle_);
-
-    //int num = this->strip_.first_dot_num_;
-    
-    
-    this->strip_.move(dt, this->x_, this->y_);
+    if (event_ptr->type == sf::Event::KeyReleased
+            && (event_ptr->key.code == sf::Keyboard::A || event_ptr->key.code == sf::Keyboard::D))
+        red_bike_ptr->frame_y_ = 0;
     
 
+
+
 }
 
-/*void motorbike::draw()
+
+int check_death_collisions(motorbike *red_bike_ptr, motorbike *blue_bike_ptr)
 {
-    this->common_elements::draw();
-    this->strip_.draw();
-}*/
+    int red_strip_len  =  red_bike_ptr->strip_.len_;
+    for (int i = 0; i < red_strip_len; ++i)
+    {
+        if (red_bike_ptr->strip_.dots_[i].visibility_
+            && i != red_bike_ptr->strip_.visible_dots_.back()
+            && red_bike_ptr->touch(red_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+                return RED_BIKE_DIED;
+
+        if (red_bike_ptr->strip_.dots_[i].visibility_
+            && blue_bike_ptr->touch(red_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+                return BLUE_BIKE_DIED;
+    }
+
+    int blue_strip_len = blue_bike_ptr->strip_.len_;
+    for (int i = 0; i < blue_strip_len; ++i)
+    {
+        if (blue_bike_ptr->strip_.dots_[i].visibility_
+            && i != blue_bike_ptr->strip_.visible_dots_.back()
+            && blue_bike_ptr->touch(blue_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+                return BLUE_BIKE_DIED;
+
+        if (blue_bike_ptr->strip_.dots_[i].visibility_
+            && red_bike_ptr->touch(blue_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+                return RED_BIKE_DIED;
+    }
+
+    return 0;
+}
+
+
+
+
+
 
 
 
@@ -322,68 +150,114 @@ void motorbike::move(float dt)
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(1200, 800), "THRON");
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "THRON");
 
-    sf::Texture bike_texture;
-    bike_texture.loadFromFile("Krasny_pryamoy.png");
-    bike_texture.setSmooth (true);
+    sf::Texture background_texture;
+    background_texture.loadFromFile("textures/background.png");
+    sf::Sprite background_sprite(background_texture);
+    background_sprite.setTextureRect(sf::IntRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+
+
+    sf::Texture red_bike_texture;
+    red_bike_texture.loadFromFile("textures/red_bike.png");
+    red_bike_texture.setSmooth (true);
+
+    sf::Texture blue_bike_texture;
+    blue_bike_texture.loadFromFile("textures/blue_bike.png");
+    blue_bike_texture.setSmooth (true);
 
     sf::Texture dot_texture;
-    dot_texture.loadFromFile("dymt.png");
+    dot_texture.loadFromFile("textures/dymt.png");
     dot_texture.setSmooth (true);
 
-    sf::Sprite bike_sprite(bike_texture);
-    bike_sprite.setTextureRect(sf::IntRect(0, 0, 600, 1000));
-
+    sf::Sprite  red_bike_sprite(red_bike_texture);
+    sf::Sprite blue_bike_sprite(blue_bike_texture);
     sf::Sprite dot_sprite(dot_texture);
-    dot_sprite.setTextureRect(sf::IntRect(0, 0, 600, 600));
 
 
-    motorbike bike0(&window, 400, 300, bike_sprite, dot_sprite, 30);
+    motorbike  red_bike(&window, 400, 700, 
+        red_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
+        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT);
+    motorbike  blue_bike(&window, 1200, 700, 
+        blue_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
+        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT);
 
-    
-    //bike0.sprite_.setTextureRect(sf::IntRect(0, 0, 50, 33));
+    motorbike *red_bike_ptr = &red_bike;
+    motorbike *blue_bike_ptr = &blue_bike;
+
+    game_manager manager;
+    manager.add_obj(red_bike_ptr);
+    manager.add_obj(blue_bike_ptr);
 
     sf::Clock main_clock;
     sf::Event event;
     float dt = 0;
+    float time_from_last_animation = 0;
 
-    // bike0.draw();
-    // window.draw(sf::Sprite(bike_texture));
-    // window.display();
-    //(sf::Mouse::isButtonPressed(sf::Mouse::Left))
 
     while (window.isOpen())
     {
         while (window.pollEvent(event))
             if (event.type == sf::Event::Closed)
+            {
                 window.close();
+                return 0;
+            }
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-            bike0.speed_ += 0.3;
+        input_processing(&window, &event, red_bike_ptr, blue_bike_ptr);
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-            bike0.speed_ -= 0.3;
+        if (time_from_last_animation / 1000000 >= BIKE_ANIMATION_DELTA)
+        {
+            if (red_bike_ptr->speed_ > EPS)
+                red_bike_ptr->frame_x_ = (red_bike_ptr->frame_x_ + 1) % 2;
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
-            bike0.speed_angle_ += 0.2;
+            if (blue_bike_ptr->speed_ > EPS)
+                blue_bike_ptr->frame_x_ = (blue_bike_ptr->frame_x_ + 1) % 2;
 
-        if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
-            bike0.speed_angle_ -= 0.2;
+            time_from_last_animation = 0;
+        }
+
+        //red_bike_ptr->frame_x_ = (red_bike_ptr->frame_x_ + 1) % 2;
+        //blue_bike_ptr->frame_x_ = (blue_bike_ptr->frame_x_ + 1) % 2;
+        manager.move(dt);
+
+        int bike_died = check_death_collisions(red_bike_ptr, blue_bike_ptr);
+        switch (bike_died)
+        {
+            case RED_BIKE_DIED:
+                window.setTitle("RED DIED");
+                red_bike_ptr->frame_y_ = 3;
+                break;
+
+            case BLUE_BIKE_DIED:
+                window.setTitle("BLUE DIED");
+                blue_bike_ptr->frame_y_ = 3;
+                break;
+
+            default:
+                break;
+        }
 
 
         window.clear();
-        bike0.move(dt);
-        bike0.strip_.move(dt);
-
-        bike0.strip_.draw();
-        bike0.draw();
+            window.draw(background_sprite);
+            // red_bike_ptr->draw_phys();
+            // blue_bike_ptr->draw_phys();
+            manager.draw();
         window.display();
 
-        //++i;
+        if (bike_died)
+        {
+            break;
+        }
+
         dt = main_clock.getElapsedTime().asMicroseconds();
+        time_from_last_animation += dt;
         main_clock.restart();
     }
+
+
+    sleep(3);
 
     return 0;
 }
