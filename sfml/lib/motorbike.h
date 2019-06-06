@@ -10,23 +10,26 @@ class motorbike: public common_elements
 public:
     motorbike(sf::RenderWindow *window_ptr, float x0, float y0,
         sf::Sprite bike_sprite, float bike_frame_width, float bike_frame_height,
-        sf::Sprite dot_sprite, float dot_frame_width, float dot_frame_height, int strip_len);
+        sf::Sprite dot_sprite, float dot_frame_width, float dot_frame_height, int strip_len, int lives);
    ~motorbike();
 
     motorbike_strip strip_;
     sf::CircleShape physical_shape_;
+    int lives_;
 
     virtual void move(float dt) override;
     virtual void draw() override;
     void draw_phys();
+    bool out_rect(sf::FloatRect rect);
     bool touch(sf::FloatRect rect);
 };
 
 motorbike::motorbike(sf::RenderWindow *window_ptr, float x0, float y0,
         sf::Sprite bike_sprite, float bike_frame_width, float bike_frame_height,
-        sf::Sprite dot_sprite, float dot_frame_width, float dot_frame_height, int strip_len):
+        sf::Sprite dot_sprite, float dot_frame_width, float dot_frame_height, int strip_len, int lives):
     common_elements(window_ptr, x0, y0, bike_sprite, bike_frame_width, bike_frame_height),
     strip_(window_ptr, x0, y0, dot_sprite, dot_frame_width, dot_frame_height, strip_len),
+    lives_(lives),
     physical_shape_(sf::CircleShape())
     {
         this->sprite_.setOrigin
@@ -102,4 +105,19 @@ bool motorbike::touch(sf::FloatRect rect)
     }
 
     return ans;
+}
+
+bool motorbike::out_rect(sf::FloatRect rect)
+{
+    bool ans = true;
+
+    int count = this->physical_shape_.getPointCount();
+
+    for (int i = 0; i < count; ++i)
+    {
+        ans = ans && rect.contains(this->physical_shape_.getTransform().
+            transformPoint(this->physical_shape_.getPoint(i)));
+    }
+
+    return !ans;
 }

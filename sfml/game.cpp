@@ -1,25 +1,29 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <queue>
 #include <unistd.h>
+#include <assert.h>
+#include <string.h>
 
 //can be changed
-const int DEATH_DOT_COUNT = 50;
+const int DEATH_DOT_COUNT = 40;
 const float SPEED_ADDITION = 0.3;
 const float ANGLE_ADDITION = 0.4;
-const float DOT_SPRITE_SIZE = 18;
+const float DOT_SPRITE_SIZE = 27;
 const float DOT_PICTURE_SIZE = 600;
-const float BIKE_SPRITE_HEIGHT = 300;
+const float BIKE_SPRITE_HEIGHT = 150;
 const float BIKE_PICTURE_HEIGHT = 650;
 const float BIKE_PICTURE_WIDTH = 400;
 const float MAX_TIME_FROM_LAST_JUMP = 0.3;
-const float MIN_SPEED = 0;
+const float MIN_SPEED = 10;
 const float MAX_SPEED = 300;
 const float WINDOW_WIDTH = 1600;
 const float WINDOW_HEIGHT = 900;
 const float BIKE_ANIMATION_DELTA = 0.6;
+const int MAX_LIFE = 5;
 
 
 //don't change
@@ -33,112 +37,427 @@ const float BIKE_ORIGIN_HEIGHT_COEFFICIENT = 0.7;
 #include "lib/game_manager.h"
 
 //don't change
+const int EXIT_APP = -666;
 const int  RED_BIKE_DIED = 1;
 const int BLUE_BIKE_DIED = 2;
 const float EPS = 0.0001;
 
 
-void input_processing(sf::RenderWindow *window_ptr, sf::Event *event_ptr, 
-    motorbike *red_bike_ptr, motorbike *blue_bike_ptr)
+void input_moving(sf::Event &event, 
+    motorbike &red_bike, motorbike &blue_bike)
 {
+    //printf("a\n");
     //red bike movement and animation
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
-        red_bike_ptr->speed_ += SPEED_ADDITION;
+        red_bike.speed_ += SPEED_ADDITION;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
-        red_bike_ptr->speed_ -= SPEED_ADDITION;
+        red_bike.speed_ -= SPEED_ADDITION;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        red_bike_ptr->speed_angle_ += ANGLE_ADDITION;        
-        red_bike_ptr->frame_y_ = 1;
+        red_bike.speed_angle_ += ANGLE_ADDITION;        
+        red_bike.frame_y_ = 1;
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        red_bike_ptr->speed_angle_ -= ANGLE_ADDITION;        
-        red_bike_ptr->frame_y_ = 2;
+        red_bike.speed_angle_ -= ANGLE_ADDITION;        
+        red_bike.frame_y_ = 2;
     }
 
 
     //blue bike movement and animation
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::O)
-            || event_ptr->type == sf::Event::MouseWheelScrolled
-            && event_ptr->mouseWheelScroll.delta > 0)
-        blue_bike_ptr->speed_ += SPEED_ADDITION;
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Up)
+            || event.type == sf::Event::MouseWheelScrolled
+            && event.mouseWheelScroll.delta > 0)
+        blue_bike.speed_ += SPEED_ADDITION;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::L)
-            || event_ptr->type == sf::Event::MouseWheelScrolled
-            && event_ptr->mouseWheelScroll.delta < 0)
-        blue_bike_ptr->speed_ -= SPEED_ADDITION;
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Down)
+            || event.type == sf::Event::MouseWheelScrolled
+            && event.mouseWheelScroll.delta < 0)
+        blue_bike.speed_ -= SPEED_ADDITION;
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::SemiColon)
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Right)
             || sf::Mouse::isButtonPressed(sf::Mouse::Right))
     {
-        blue_bike_ptr->speed_angle_ += ANGLE_ADDITION;        
-        blue_bike_ptr->frame_y_ = 1;
+        blue_bike.speed_angle_ += ANGLE_ADDITION;        
+        blue_bike.frame_y_ = 1;
     }
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::K)
+            || sf::Keyboard::isKeyPressed(sf::Keyboard::Left)
             || sf::Mouse::isButtonPressed(sf::Mouse::Left))
     {
-        blue_bike_ptr->speed_angle_ -= ANGLE_ADDITION;        
-        blue_bike_ptr->frame_y_ = 2;
+        blue_bike.speed_angle_ -= ANGLE_ADDITION;        
+        blue_bike.frame_y_ = 2;
     }
 
     //returning to default animation
-    if (event_ptr->type == sf::Event::KeyReleased
-            && (event_ptr->key.code == sf::Keyboard::K || event_ptr->key.code == sf::Keyboard::SemiColon)
-            || event_ptr->type == sf::Event::MouseButtonReleased
-            && (event_ptr->mouseButton.button == sf::Mouse::Right || event_ptr->mouseButton.button == sf::Mouse::Left))
-        blue_bike_ptr->frame_y_ = 0;
+    if (event.type == sf::Event::KeyReleased
+            && (event.key.code == sf::Keyboard::K || event.key.code == sf::Keyboard::SemiColon
+            || event.key.code == sf::Keyboard::Left || event.key.code == sf::Keyboard::Right)
+            || event.type == sf::Event::MouseButtonReleased
+            && (event.mouseButton.button == sf::Mouse::Right || event.mouseButton.button == sf::Mouse::Left))
+        blue_bike.frame_y_ = 0;
 
-    if (event_ptr->type == sf::Event::KeyReleased
-            && (event_ptr->key.code == sf::Keyboard::A || event_ptr->key.code == sf::Keyboard::D))
-        red_bike_ptr->frame_y_ = 0;
-    
-
-
-
+    if (event.type == sf::Event::KeyReleased
+            && (event.key.code == sf::Keyboard::A || event.key.code == sf::Keyboard::D))
+        red_bike.frame_y_ = 0;
 }
 
-
-int check_death_collisions(motorbike *red_bike_ptr, motorbike *blue_bike_ptr)
+int check_death_collisions(motorbike &red_bike, motorbike &blue_bike)
 {
-    int red_strip_len  =  red_bike_ptr->strip_.len_;
+    if (red_bike.out_rect(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)))
+        return RED_BIKE_DIED;
+
+    if (blue_bike.out_rect(sf::FloatRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT)))
+        return BLUE_BIKE_DIED;
+
+
+    int red_strip_len  =  red_bike.strip_.len_;
     for (int i = 0; i < red_strip_len; ++i)
     {
-        if (red_bike_ptr->strip_.dots_[i].visibility_
-            && i != red_bike_ptr->strip_.visible_dots_.back()
-            && red_bike_ptr->touch(red_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+        if (red_bike.strip_.dots_[i].visibility_
+            && i != red_bike.strip_.visible_dots_.back()
+            && red_bike.touch(red_bike.strip_.dots_[i].sprite_.getGlobalBounds()))
                 return RED_BIKE_DIED;
 
-        if (red_bike_ptr->strip_.dots_[i].visibility_
-            && blue_bike_ptr->touch(red_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+        if (red_bike.strip_.dots_[i].visibility_
+            && blue_bike.touch(red_bike.strip_.dots_[i].sprite_.getGlobalBounds()))
                 return BLUE_BIKE_DIED;
     }
 
-    int blue_strip_len = blue_bike_ptr->strip_.len_;
+
+    int blue_strip_len = blue_bike.strip_.len_;
     for (int i = 0; i < blue_strip_len; ++i)
     {
-        if (blue_bike_ptr->strip_.dots_[i].visibility_
-            && i != blue_bike_ptr->strip_.visible_dots_.back()
-            && blue_bike_ptr->touch(blue_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+        if (blue_bike.strip_.dots_[i].visibility_
+            && i != blue_bike.strip_.visible_dots_.back()
+            && blue_bike.touch(blue_bike.strip_.dots_[i].sprite_.getGlobalBounds()))
                 return BLUE_BIKE_DIED;
 
-        if (blue_bike_ptr->strip_.dots_[i].visibility_
-            && red_bike_ptr->touch(blue_bike_ptr->strip_.dots_[i].sprite_.getGlobalBounds()))
+        if (blue_bike.strip_.dots_[i].visibility_
+            && red_bike.touch(blue_bike.strip_.dots_[i].sprite_.getGlobalBounds()))
                 return RED_BIKE_DIED;
+    }
+
+
+    return 0;
+}
+
+int main_menu(sf::RenderWindow &window, sf::Event &event)
+{
+    sf::Font font;
+    font.loadFromFile("font.otf");
+    sf::Text text("", font, 80);
+    text.setFillColor(sf::Color::Red);
+    //text.setStyle(sf::Text::Bold);
+
+    sf::Texture menu_texture;
+    menu_texture.loadFromFile("textures/menu.png");
+    sf::Sprite menu_sprite(menu_texture);
+
+
+    common_elements menu(&window, 0, 0, 
+        menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    int life_count = 1;
+    std::string life_count_s = std::to_string(life_count);
+    text.setPosition(770, 430);
+
+    while (window.isOpen())
+    {
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                window.close();
+                return EXIT_APP;
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (event.key.code == sf::Keyboard::Down))
+            {
+                menu.frame_y_ = (menu.frame_y_ + 1) % 3;
+                //window.pollEvent(event);
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (event.key.code == sf::Keyboard::Up))
+            {
+                menu.frame_y_ = (menu.frame_y_ + 2) % 3;
+                //window.pollEvent(event);
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (menu.frame_y_ == 1)
+                    && (event.key.code == sf::Keyboard::Right))
+            {
+                life_count = (life_count) % MAX_LIFE + 1;
+                //window.pollEvent(event);
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (menu.frame_y_ == 1)
+                    && (event.key.code == sf::Keyboard::Left))
+            {
+                life_count = (life_count + MAX_LIFE - 2) % MAX_LIFE + 1;
+                //window.pollEvent(event);
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (event.key.code == sf::Keyboard::Return))
+            {
+                if (menu.frame_y_ == 2)
+                    return EXIT_APP;
+                else if (menu.frame_y_ == 0)
+                    return life_count;
+                //window.pollEvent(event);
+            }
+        }
+
+        window.clear();
+            menu.draw();
+            life_count_s = std::to_string(life_count);
+            text.setString(life_count_s.c_str());
+            window.draw(text);
+        window.display();
+    }
+
+    return life_count;
+}
+
+int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite, sf::Font &font)
+{
+    motorbike  &red_bike = *(motorbike*)manager.game_objects_[0];
+    motorbike &blue_bike = *(motorbike*)manager.game_objects_[1];
+
+    switch (bike_died)
+        {
+            case RED_BIKE_DIED:
+                window.setTitle("RED DIED");
+                red_bike.frame_y_ = 3;
+                red_bike.frame_x_ = 0;
+                red_bike.lives_--;
+                break;
+
+            case BLUE_BIKE_DIED:
+                window.setTitle("BLUE DIED");
+                blue_bike.frame_y_ = 3;
+                blue_bike.frame_x_ = 0;
+                blue_bike.lives_--;
+                break;
+
+            default:
+                assert(0);
+        }
+
+
+    window.clear();
+        window.draw(background_sprite);
+        //red_bike.draw_phys();
+        //blue_bike.draw_phys();
+        manager.draw();
+    window.display();
+
+    sleep(1);
+
+
+    char text_str[15] = "";
+
+    sf::Text red_text("", font, 80);
+    red_text.setOutlineThickness(5);
+    red_text.setOutlineColor(sf::Color::White);
+    red_text.setFillColor(sf::Color::Red);
+    std::string red_life_count_s = std::to_string(red_bike.lives_);
+    strcpy(text_str, "red lives: ");
+    strcat(text_str, red_life_count_s.c_str());
+    red_text.setString(text_str);
+    red_text.setPosition(70, 70);
+    
+    sf::Text blue_text("", font, 80);
+    blue_text.setOutlineThickness(5);
+    blue_text.setOutlineColor(sf::Color::White);
+    blue_text.setFillColor(sf::Color::Blue);
+    std::string blue_life_count_s = std::to_string(blue_bike.lives_);
+    strcpy(text_str, "blue lives: ");
+    strcat(text_str, blue_life_count_s.c_str());
+    blue_text.setString(text_str);
+    blue_text.setPosition(1000, 70);
+
+
+
+    window.clear();
+        window.draw(background_sprite);
+        window.draw(red_text);
+        window.draw(blue_text);
+    window.display();
+
+    sleep(1);
+
+
+    motorbike new_red_bike(&window, 400, 700, 
+        red_bike.sprite_, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
+        red_bike.strip_.sprite_, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, red_bike.lives_);
+    motorbike new_blue_bike(&window, 1200, 700, 
+        blue_bike.sprite_, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
+        blue_bike.strip_.sprite_, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, blue_bike.lives_);
+
+    std::swap(red_bike, new_red_bike);
+    std::swap(blue_bike, new_blue_bike);
+
+    window.setTitle("THRONE");
+
+    return 0;
+}
+
+int game_cycle(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite);
+
+int play_game(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite);
+
+int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_sprite,
+    game_manager &manager, sf::Sprite &background_sprite)
+{
+
+    common_elements end_menu(&window, 0, 0, 
+        end_menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
+
+    while (window.isOpen())
+    {
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                window.close();
+                return 0;
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (event.key.code == sf::Keyboard::Down
+                    || event.key.code == sf::Keyboard::Up))
+            {
+                end_menu.frame_y_ = (end_menu.frame_y_ + 1) % 2;
+                //window.pollEvent(event);
+            }
+            
+            if (event.type == sf::Event::KeyPressed
+                    && (event.key.code == sf::Keyboard::Return))
+            {
+                if (end_menu.frame_y_ == 1)
+                    return 0;///////////////////////////////
+                else if (end_menu.frame_y_ == 0)
+                {
+                    play_game(window, event, manager, background_sprite);
+                    return 0;
+                }
+                //window.pollEvent(event);
+            }
+        }
+
+        window.clear();
+            end_menu.draw();
+        window.display();
     }
 
     return 0;
 }
 
+int game_cycle(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite)
+{
+
+    motorbike  &red_bike = *(motorbike*)manager.game_objects_[0];
+    motorbike &blue_bike = *(motorbike*)manager.game_objects_[1];
+
+    sf::Clock main_clock;
+    float dt = 0;
+    float time_from_last_animation = 0;
+    sf::Font font;
+    font.loadFromFile("font.otf");
+    
+    sf::Texture end_menu_texture;
+    end_menu_texture.loadFromFile("textures/end_menu.png");
+    end_menu_texture.setSmooth(true);
+    sf::Sprite end_menu_sprite(end_menu_texture);
+    common_elements end_menu(&window, 0, 0, 
+        end_menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
 
 
+    while (window.isOpen())
+    {
+        while (window.pollEvent(event))
+            if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                window.close();
+                return 0;
+            }
+
+        input_moving(event, red_bike, blue_bike);
+
+        if (time_from_last_animation / 1000000 >= BIKE_ANIMATION_DELTA)
+        {
+            if (red_bike.speed_ > EPS)
+                red_bike.frame_x_ = (red_bike.frame_x_ + 1) % 2;
+
+            if (blue_bike.speed_ > EPS)
+                blue_bike.frame_x_ = (blue_bike.frame_x_ + 1) % 2;
+
+            time_from_last_animation = 0;
+        }
+
+        manager.move(dt);
 
 
+        window.clear();
+            window.draw(background_sprite);
+            //red_bike.draw_phys();
+            // blue_bike.draw_phys();
+            manager.draw();
+        window.display();
 
+
+        int bike_died = check_death_collisions(red_bike, blue_bike);
+        if (bike_died)
+            death_func(bike_died, window, event, manager, background_sprite, font);
+
+        if (!(blue_bike.lives_ * red_bike.lives_))
+            break;
+
+        dt = main_clock.getElapsedTime().asMicroseconds();
+        time_from_last_animation += dt;
+        main_clock.restart();
+    }
+
+    end_func(window, event, end_menu_sprite, manager, background_sprite);
+
+    return 0;
+}
+
+int play_game(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite)
+{
+    motorbike  &red_bike = *(motorbike*)manager.game_objects_[0];
+    motorbike &blue_bike = *(motorbike*)manager.game_objects_[1];
+
+
+    int life_count = main_menu(window, event);
+    if (life_count == EXIT_APP)
+        return 0;
+
+    red_bike.lives_  = life_count;
+    blue_bike.lives_ = life_count;
+
+    game_cycle(window, event, manager, background_sprite);
+
+    return 0;
+}
 
 
 
@@ -149,115 +468,57 @@ int check_death_collisions(motorbike *red_bike_ptr, motorbike *blue_bike_ptr)
 
 
 int main()
-{
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "THRON");
+{    
+    sf::Music main_theme;
+    main_theme.openFromFile("music/mus1.ogg");
+    main_theme.setLoop(true);
+    //main_theme.play();
 
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "THRONE");
+
+    
     sf::Texture background_texture;
-    background_texture.loadFromFile("textures/background.png");
+    background_texture.loadFromFile("textures/back1.png");
+    background_texture.setSmooth(true);
     sf::Sprite background_sprite(background_texture);
-    background_sprite.setTextureRect(sf::IntRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
-
+    //background_sprite.setTextureRect(sf::IntRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
 
     sf::Texture red_bike_texture;
     red_bike_texture.loadFromFile("textures/red_bike.png");
-    red_bike_texture.setSmooth (true);
+    red_bike_texture.setSmooth(true);
+    sf::Sprite  red_bike_sprite(red_bike_texture);
 
     sf::Texture blue_bike_texture;
     blue_bike_texture.loadFromFile("textures/blue_bike.png");
-    blue_bike_texture.setSmooth (true);
+    blue_bike_texture.setSmooth(true);
+    sf::Sprite blue_bike_sprite(blue_bike_texture);
 
     sf::Texture dot_texture;
     dot_texture.loadFromFile("textures/dymt.png");
-    dot_texture.setSmooth (true);
-
-    sf::Sprite  red_bike_sprite(red_bike_texture);
-    sf::Sprite blue_bike_sprite(blue_bike_texture);
+    dot_texture.setSmooth(true);
     sf::Sprite dot_sprite(dot_texture);
 
+    sf::Event event;
 
-    motorbike  red_bike(&window, 400, 700, 
+
+    motorbike red_bike(&window, 400, 700, 
         red_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
-        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT);
-    motorbike  blue_bike(&window, 1200, 700, 
+        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, 1);
+    motorbike blue_bike(&window, 1200, 700, 
         blue_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
-        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT);
+        dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, 1);
 
-    motorbike *red_bike_ptr = &red_bike;
-    motorbike *blue_bike_ptr = &blue_bike;
+    //motorbike *red_bike_ptr = &red_bike;
+    //motorbike *blue_bike_ptr = &blue_bike;
 
     game_manager manager;
-    manager.add_obj(red_bike_ptr);
-    manager.add_obj(blue_bike_ptr);
+    manager.add_obj(&red_bike);
+    manager.add_obj(&blue_bike);
 
-    sf::Clock main_clock;
-    sf::Event event;
-    float dt = 0;
-    float time_from_last_animation = 0;
+    play_game(window, event, manager, background_sprite);
 
 
-    while (window.isOpen())
-    {
-        while (window.pollEvent(event))
-            if (event.type == sf::Event::Closed)
-            {
-                window.close();
-                return 0;
-            }
-
-        input_processing(&window, &event, red_bike_ptr, blue_bike_ptr);
-
-        if (time_from_last_animation / 1000000 >= BIKE_ANIMATION_DELTA)
-        {
-            if (red_bike_ptr->speed_ > EPS)
-                red_bike_ptr->frame_x_ = (red_bike_ptr->frame_x_ + 1) % 2;
-
-            if (blue_bike_ptr->speed_ > EPS)
-                blue_bike_ptr->frame_x_ = (blue_bike_ptr->frame_x_ + 1) % 2;
-
-            time_from_last_animation = 0;
-        }
-
-        //red_bike_ptr->frame_x_ = (red_bike_ptr->frame_x_ + 1) % 2;
-        //blue_bike_ptr->frame_x_ = (blue_bike_ptr->frame_x_ + 1) % 2;
-        manager.move(dt);
-
-        int bike_died = check_death_collisions(red_bike_ptr, blue_bike_ptr);
-        switch (bike_died)
-        {
-            case RED_BIKE_DIED:
-                window.setTitle("RED DIED");
-                red_bike_ptr->frame_y_ = 3;
-                break;
-
-            case BLUE_BIKE_DIED:
-                window.setTitle("BLUE DIED");
-                blue_bike_ptr->frame_y_ = 3;
-                break;
-
-            default:
-                break;
-        }
-
-
-        window.clear();
-            window.draw(background_sprite);
-            // red_bike_ptr->draw_phys();
-            // blue_bike_ptr->draw_phys();
-            manager.draw();
-        window.display();
-
-        if (bike_died)
-        {
-            break;
-        }
-
-        dt = main_clock.getElapsedTime().asMicroseconds();
-        time_from_last_animation += dt;
-        main_clock.restart();
-    }
-
-
-    sleep(3);
+    //sleep(3);
 
     return 0;
 }
