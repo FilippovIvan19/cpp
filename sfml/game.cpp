@@ -18,11 +18,13 @@ const float BIKE_SPRITE_HEIGHT = 150;
 const float BIKE_PICTURE_HEIGHT = 650;
 const float BIKE_PICTURE_WIDTH = 400;
 const float MAX_TIME_FROM_LAST_JUMP = 0.3;
-const float MIN_SPEED = 10;
+const float MIN_SPEED = 70;
 const float MAX_SPEED = 300;
+const float STD_WINDOW_WIDTH = 1600;
+const float STD_WINDOW_HEIGHT = 900;
 const float WINDOW_WIDTH = 1600;
 const float WINDOW_HEIGHT = 900;
-const float BIKE_ANIMATION_DELTA = 0.6;
+const float BIKE_ANIMATION_DELTA = 0.4;
 const int MAX_LIFE = 5;
 
 
@@ -42,6 +44,40 @@ const int  RED_BIKE_DIED = 1;
 const int BLUE_BIKE_DIED = 2;
 const float EPS = 0.0001;
 
+
+void input_moving(sf::Event &event, 
+    motorbike &red_bike, motorbike &blue_bike);
+
+int check_death_collisions(motorbike &red_bike, motorbike &blue_bike);
+
+int main_menu(sf::RenderWindow &window, sf::Event &event);
+
+int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite, sf::Font &font);
+
+int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_sprite,
+    game_manager &manager, sf::Sprite &background_sprite);
+
+int game_cycle(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite);
+
+int play_game(sf::RenderWindow &window, sf::Event &event, 
+    game_manager &manager, sf::Sprite &background_sprite);
+
+
+int wait_space(sf::RenderWindow &window, sf::Event &event, int cycles)
+{
+    for (int i = 0; i < cycles; ++i)
+    {
+        ;
+        if (window.pollEvent(event) && event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space)
+        {
+            //window.pollEvent(event);
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void input_moving(sf::Event &event, 
     motorbike &red_bike, motorbike &blue_bike)
@@ -160,14 +196,14 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
     sf::Texture menu_texture;
     menu_texture.loadFromFile("textures/menu.png");
     sf::Sprite menu_sprite(menu_texture);
-
-
+    menu_texture.setSmooth(true);
     common_elements menu(&window, 0, 0, 
-        menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
+        menu_sprite, STD_WINDOW_WIDTH, STD_WINDOW_HEIGHT);
+    menu.sprite_.setScale(WINDOW_WIDTH / STD_WINDOW_WIDTH, WINDOW_HEIGHT / STD_WINDOW_HEIGHT);
 
     int life_count = 1;
     std::string life_count_s = std::to_string(life_count);
-    text.setPosition(770, 430);
+    text.setPosition(WINDOW_WIDTH * 0.485, WINDOW_HEIGHT * 0.47);
 
     while (window.isOpen())
     {
@@ -265,7 +301,10 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
         manager.draw();
     window.display();
 
-    sleep(1);
+    //sleep(1);
+    //printf("1\n");
+    wait_space(window, event, 400000);
+    //printf("2\n");
 
 
     char text_str[15] = "";
@@ -278,7 +317,7 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
     strcpy(text_str, "red lives: ");
     strcat(text_str, red_life_count_s.c_str());
     red_text.setString(text_str);
-    red_text.setPosition(70, 70);
+    red_text.setPosition(70 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 70 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT);
     
     sf::Text blue_text("", font, 80);
     blue_text.setOutlineThickness(5);
@@ -288,7 +327,7 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
     strcpy(text_str, "blue lives: ");
     strcat(text_str, blue_life_count_s.c_str());
     blue_text.setString(text_str);
-    blue_text.setPosition(1000, 70);
+    blue_text.setPosition(1000 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 70 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT);
 
 
 
@@ -298,36 +337,33 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
         window.draw(blue_text);
     window.display();
 
-    sleep(1);
+    //sleep(1);
+    //printf("3\n");
+    wait_space(window, event, 400000);
+    //printf("4\n");
 
 
-    motorbike new_red_bike(&window, 400, 700, 
+    motorbike new_red_bike(&window, 400 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 700 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT, 
         red_bike.sprite_, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
         red_bike.strip_.sprite_, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, red_bike.lives_);
-    motorbike new_blue_bike(&window, 1200, 700, 
+    motorbike new_blue_bike(&window, 1200 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 700 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT, 
         blue_bike.sprite_, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
         blue_bike.strip_.sprite_, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, blue_bike.lives_);
 
     std::swap(red_bike, new_red_bike);
     std::swap(blue_bike, new_blue_bike);
 
-    window.setTitle("THRONE");
+    window.setTitle("TRON");
 
     return 0;
 }
-
-int game_cycle(sf::RenderWindow &window, sf::Event &event, 
-    game_manager &manager, sf::Sprite &background_sprite);
-
-int play_game(sf::RenderWindow &window, sf::Event &event, 
-    game_manager &manager, sf::Sprite &background_sprite);
 
 int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_sprite,
     game_manager &manager, sf::Sprite &background_sprite)
 {
 
     common_elements end_menu(&window, 0, 0, 
-        end_menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
+        end_menu_sprite, STD_WINDOW_WIDTH, STD_WINDOW_HEIGHT);
 
     while (window.isOpen())
     {
@@ -351,7 +387,7 @@ int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_spr
                     && (event.key.code == sf::Keyboard::Return))
             {
                 if (end_menu.frame_y_ == 1)
-                    return 0;///////////////////////////////
+                    return 0;
                 else if (end_menu.frame_y_ == 0)
                 {
                     play_game(window, event, manager, background_sprite);
@@ -386,6 +422,7 @@ int game_cycle(sf::RenderWindow &window, sf::Event &event,
     end_menu_texture.loadFromFile("textures/end_menu.png");
     end_menu_texture.setSmooth(true);
     sf::Sprite end_menu_sprite(end_menu_texture);
+    end_menu_sprite.setScale(WINDOW_WIDTH / STD_WINDOW_WIDTH, WINDOW_HEIGHT / STD_WINDOW_HEIGHT);
     common_elements end_menu(&window, 0, 0, 
         end_menu_sprite, WINDOW_WIDTH, WINDOW_HEIGHT);
 
@@ -425,7 +462,10 @@ int game_cycle(sf::RenderWindow &window, sf::Event &event,
 
         int bike_died = check_death_collisions(red_bike, blue_bike);
         if (bike_died)
+        {
             death_func(bike_died, window, event, manager, background_sprite, font);
+            main_clock.restart();
+        }
 
         if (!(blue_bike.lives_ * red_bike.lives_))
             break;
@@ -467,21 +507,23 @@ int play_game(sf::RenderWindow &window, sf::Event &event,
 /////////////////////////////
 
 
-int main()
+
+int main(int argc, char const *argv[])
 {    
     sf::Music main_theme;
     main_theme.openFromFile("music/mus1.ogg");
     main_theme.setLoop(true);
-    //main_theme.play();
+    if (argc > 1 && !strcmp(argv[1], "play_music"))
+        main_theme.play();
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "THRONE");
+    sf::RenderWindow window(sf::VideoMode(WINDOW_WIDTH, WINDOW_HEIGHT), "TRON");
 
     
     sf::Texture background_texture;
     background_texture.loadFromFile("textures/back1.png");
     background_texture.setSmooth(true);
     sf::Sprite background_sprite(background_texture);
-    //background_sprite.setTextureRect(sf::IntRect(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT));
+    background_sprite.setScale(WINDOW_WIDTH / STD_WINDOW_WIDTH, WINDOW_HEIGHT / STD_WINDOW_HEIGHT);
 
     sf::Texture red_bike_texture;
     red_bike_texture.loadFromFile("textures/red_bike.png");
@@ -501,10 +543,10 @@ int main()
     sf::Event event;
 
 
-    motorbike red_bike(&window, 400, 700, 
+    motorbike red_bike(&window, 400 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 700 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT, 
         red_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
         dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, 1);
-    motorbike blue_bike(&window, 1200, 700, 
+    motorbike blue_bike(&window, 1200 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 700 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT, 
         blue_bike_sprite, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
         dot_sprite, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, 1);
 
@@ -517,8 +559,6 @@ int main()
 
     play_game(window, event, manager, background_sprite);
 
-
-    //sleep(3);
 
     return 0;
 }
