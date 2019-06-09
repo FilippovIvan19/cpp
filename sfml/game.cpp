@@ -216,37 +216,37 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
             }
             
             if (event.type == sf::Event::KeyPressed
-                    && (event.key.code == sf::Keyboard::Down))
+                && (event.key.code == sf::Keyboard::Down))
             {
                 menu.frame_y_ = (menu.frame_y_ + 1) % 3;
                 //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
-                    && (event.key.code == sf::Keyboard::Up))
+                && (event.key.code == sf::Keyboard::Up))
             {
                 menu.frame_y_ = (menu.frame_y_ + 2) % 3;
                 //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
-                    && (menu.frame_y_ == 1)
-                    && (event.key.code == sf::Keyboard::Right))
+                && (menu.frame_y_ == 1)
+                && (event.key.code == sf::Keyboard::Right))
             {
                 life_count = (life_count) % MAX_LIFE + 1;
                 //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
-                    && (menu.frame_y_ == 1)
-                    && (event.key.code == sf::Keyboard::Left))
+                && (menu.frame_y_ == 1)
+                && (event.key.code == sf::Keyboard::Left))
             {
                 life_count = (life_count + MAX_LIFE - 2) % MAX_LIFE + 1;
                 //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
-                    && (event.key.code == sf::Keyboard::Return))
+                && (event.key.code == sf::Keyboard::Return))
             {
                 if (menu.frame_y_ == 2)
                     return EXIT_APP;
@@ -362,6 +362,27 @@ int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_spr
     game_manager &manager, sf::Sprite &background_sprite)
 {
 
+    motorbike  &red_bike = *(motorbike*)manager.game_objects_[0];
+    motorbike &blue_bike = *(motorbike*)manager.game_objects_[1];
+
+
+    sf::Font font;
+    font.loadFromFile("font.otf");
+    sf::Text text("", font, 80);
+    text.setPosition(WINDOW_WIDTH * 0.4, WINDOW_HEIGHT * 0.1);
+
+    if (red_bike.lives_)
+    {
+        text.setFillColor(sf::Color::Red);
+        text.setString("RED WIN");
+    }
+    if (blue_bike.lives_)
+    {
+        text.setFillColor(sf::Color::Blue);
+        text.setString("BLUE WIN");
+    }
+
+
     common_elements end_menu(&window, 0, 0, 
         end_menu_sprite, STD_WINDOW_WIDTH, STD_WINDOW_HEIGHT);
 
@@ -399,6 +420,7 @@ int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_spr
 
         window.clear();
             end_menu.draw();
+            window.draw(text);
         window.display();
     }
 
