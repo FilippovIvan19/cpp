@@ -65,17 +65,26 @@ int play_game(sf::RenderWindow &window, sf::Event &event,
     game_manager &manager, sf::Sprite &background_sprite);
 
 
-int wait_space(sf::RenderWindow &window, sf::Event &event, int cycles)
+int wait_space(sf::RenderWindow &window, sf::Event &event)
 {
-    for (int i = 0; i < cycles; ++i)
-    {
-        ;
-        if (window.pollEvent(event) && event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space)
-        {
-            //window.pollEvent(event);
-            return 1;
-        }
+    while (!(event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Space))
+    {        
+        window.waitEvent(event);
+        if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                window.close();
+                return EXIT_APP;
+            }
     }
+    while (!(event.type == sf::Event::KeyReleased && event.key.code == sf::Keyboard::Space))
+    {        
+        window.waitEvent(event);
+        if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
+                window.close();
+                return EXIT_APP;
+            }
+        }
     return 0;
 }
 
@@ -303,7 +312,8 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
 
     //sleep(1);
     //printf("1\n");
-    wait_space(window, event, 400000);
+    if (wait_space(window, event) == EXIT_APP)
+        return EXIT_APP;
     //printf("2\n");
 
 
@@ -339,7 +349,8 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
 
     //sleep(1);
     //printf("3\n");
-    wait_space(window, event, 400000);
+    if (wait_space(window, event) == EXIT_APP)
+        return EXIT_APP;
     //printf("4\n");
 
 
@@ -485,7 +496,8 @@ int game_cycle(sf::RenderWindow &window, sf::Event &event,
         int bike_died = check_death_collisions(red_bike, blue_bike);
         if (bike_died)
         {
-            death_func(bike_died, window, event, manager, background_sprite, font);
+            if (death_func(bike_died, window, event, manager, background_sprite, font) == EXIT_APP)
+                return 0;/////////////////////
             main_clock.restart();
         }
 

@@ -38,7 +38,7 @@ motorbike::motorbike(sf::RenderWindow *window_ptr, float x0, float y0,
 
         this->sprite_.setScale(BIKE_SPRITE_SIZE_COEFFICIENT, BIKE_SPRITE_SIZE_COEFFICIENT);
 
-        this->physical_shape_.setPointCount(8);
+        this->physical_shape_.setPointCount(16);
         this->physical_shape_.setRadius(this->sprite_.getGlobalBounds().height / 2);
         this->physical_shape_.setScale
             (this->sprite_.getGlobalBounds().width / this->sprite_.getGlobalBounds().height * PHYSICAL_WIDTH_COEFFICIENT, PHYSICAL_HEIGTH_COEFFICIENT);
