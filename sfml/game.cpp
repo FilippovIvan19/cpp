@@ -354,6 +354,13 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
     //printf("4\n");
 
 
+    // blue_bike.frame_y_ = 0;
+    // blue_bike.frame_x_ = 0;
+    //  red_bike.frame_y_ = 0;
+    //  red_bike.frame_x_ = 0;
+     red_bike.sprite_.setRotation(0);
+    blue_bike.sprite_.setRotation(0);
+
     motorbike new_red_bike(&window, 400 / STD_WINDOW_WIDTH * WINDOW_WIDTH, 700 / STD_WINDOW_HEIGHT * WINDOW_HEIGHT, 
         red_bike.sprite_, BIKE_PICTURE_WIDTH, BIKE_PICTURE_HEIGHT,
         red_bike.strip_.sprite_, DOT_PICTURE_SIZE, DOT_PICTURE_SIZE, DEATH_DOT_COUNT, red_bike.lives_);
@@ -487,7 +494,7 @@ int game_cycle(sf::RenderWindow &window, sf::Event &event,
 
         window.clear();
             window.draw(background_sprite);
-            //red_bike.draw_phys();
+            // red_bike.draw_phys();
             // blue_bike.draw_phys();
             manager.draw();
         window.display();
@@ -497,7 +504,7 @@ int game_cycle(sf::RenderWindow &window, sf::Event &event,
         if (bike_died)
         {
             if (death_func(bike_died, window, event, manager, background_sprite, font) == EXIT_APP)
-                return 0;/////////////////////
+                return 0;
             main_clock.restart();
         }
 

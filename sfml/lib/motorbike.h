@@ -82,6 +82,7 @@ void motorbike::draw_phys()
     this->window_ptr_->draw(physical_shape_);
 
     sf::CircleShape circ(5);
+    circ.setOrigin(5, 5);
     int count = this->physical_shape_.getPointCount();
     
     for (int i = 0; i < count; ++i)
