@@ -91,7 +91,6 @@ int wait_space(sf::RenderWindow &window, sf::Event &event)
 void input_moving(sf::Event &event, 
     motorbike &red_bike, motorbike &blue_bike)
 {
-    //printf("a\n");
     //red bike movement and animation
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
         red_bike.speed_ += SPEED_ADDITION;
@@ -200,7 +199,6 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
     font.loadFromFile("font.otf");
     sf::Text text("", font, 80);
     text.setFillColor(sf::Color::Red);
-    //text.setStyle(sf::Text::Bold);
 
     sf::Texture menu_texture;
     menu_texture.loadFromFile("textures/menu.png");
@@ -228,14 +226,12 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
                 && (event.key.code == sf::Keyboard::Down))
             {
                 menu.frame_y_ = (menu.frame_y_ + 1) % 3;
-                //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
                 && (event.key.code == sf::Keyboard::Up))
             {
                 menu.frame_y_ = (menu.frame_y_ + 2) % 3;
-                //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
@@ -243,7 +239,6 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
                 && (event.key.code == sf::Keyboard::Right))
             {
                 life_count = (life_count) % MAX_LIFE + 1;
-                //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
@@ -251,7 +246,6 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
                 && (event.key.code == sf::Keyboard::Left))
             {
                 life_count = (life_count + MAX_LIFE - 2) % MAX_LIFE + 1;
-                //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
@@ -261,7 +255,6 @@ int main_menu(sf::RenderWindow &window, sf::Event &event)
                     return EXIT_APP;
                 else if (menu.frame_y_ == 0)
                     return life_count;
-                //window.pollEvent(event);
             }
         }
 
@@ -310,12 +303,8 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
         manager.draw();
     window.display();
 
-    //sleep(1);
-    //printf("1\n");
     if (wait_space(window, event) == EXIT_APP)
         return EXIT_APP;
-    //printf("2\n");
-
 
     char text_str[15] = "";
 
@@ -347,17 +336,10 @@ int death_func(int bike_died, sf::RenderWindow &window, sf::Event &event,
         window.draw(blue_text);
     window.display();
 
-    //sleep(1);
-    //printf("3\n");
     if (wait_space(window, event) == EXIT_APP)
         return EXIT_APP;
-    //printf("4\n");
 
 
-    // blue_bike.frame_y_ = 0;
-    // blue_bike.frame_x_ = 0;
-    //  red_bike.frame_y_ = 0;
-    //  red_bike.frame_x_ = 0;
      red_bike.sprite_.setRotation(0);
     blue_bike.sprite_.setRotation(0);
 
@@ -419,7 +401,6 @@ int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_spr
                     || event.key.code == sf::Keyboard::Up))
             {
                 end_menu.frame_y_ = (end_menu.frame_y_ + 1) % 2;
-                //window.pollEvent(event);
             }
             
             if (event.type == sf::Event::KeyPressed
@@ -432,7 +413,6 @@ int end_func(sf::RenderWindow &window, sf::Event &event, sf::Sprite end_menu_spr
                     play_game(window, event, manager, background_sprite);
                     return 0;
                 }
-                //window.pollEvent(event);
             }
         }
 
