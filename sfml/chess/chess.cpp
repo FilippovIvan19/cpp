@@ -11,8 +11,7 @@ const int NORMAL_SQUARE = 0;
 const int GREEN_SQUARE = 1;
 const int RED_SQUARE = 2;
 const int PURPLE_SQUARE = 3;
-
-
+const int EXIT = -666;
 
 enum Color
 {
@@ -30,14 +29,11 @@ enum Kind
     KING
 };
 
-
-
 #include "lib/common_elements.hpp"
 #include "lib/board.hpp"
 #include "lib/pieces.hpp"
 #include "lib/game_manager.hpp"
 #include "lib/game_logic.hpp"
-
 
 
 int main(int argc, char const *argv[])
@@ -59,10 +55,10 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < 8; ++i)
     {
-        cur_piece = new pawn(&window, BLACK, i, 1, pieces_texture);
+        cur_piece = new pawn(&window, BLACK, i, 1, pieces_texture, chessboard);
         manager.add_obj(cur_piece);
 
-        cur_piece = new pawn(&window, WHITE, i, 6, pieces_texture);
+        cur_piece = new pawn(&window, WHITE, i, 6, pieces_texture, chessboard);
         manager.add_obj(cur_piece);
     }
 

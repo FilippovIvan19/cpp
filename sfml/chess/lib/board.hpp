@@ -1,3 +1,5 @@
+class piece;
+
 class square: public common_elements
 {
 public:
@@ -6,6 +8,7 @@ public:
    ~square();
 
     int frame_;
+    piece *piece_ptr_;
     
     void change_frame(int frame_num);
 };
@@ -13,7 +16,8 @@ public:
 
 square::square(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture):
     common_elements(window, color, x, y),
-    frame_(0)
+    frame_(0),
+    piece_ptr_(nullptr)
     {        
         this->sprite_ = sf::Sprite(texture);
         this->sprite_.setTextureRect(sf::IntRect(0, color * SQUARE_SIZE, SQUARE_SIZE, SQUARE_SIZE));
@@ -23,7 +27,8 @@ square::square(sf::RenderWindow *window, Color color, int x, int y, sf::Texture 
 
 square::square():
     common_elements(),
-    frame_(0)
+    frame_(0),
+    piece_ptr_(nullptr)
     {}
 
 square::~square()

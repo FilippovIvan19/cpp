@@ -33,8 +33,4 @@ void game_manager::clear()
 {
     for (piece *obj: this->game_objects_)
         delete(obj);
-
-    // int count = this->game_objects_.size();
-    // for (int i = 0; i < count; ++i)
-    //     delete(this->game_objects_[i]);
 }
