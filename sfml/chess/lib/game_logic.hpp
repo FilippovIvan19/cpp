@@ -1,9 +1,9 @@
 void draw_all(sf::RenderWindow &window, game_manager &manager, board &chessboard)
 {
-        window.clear();
-            chessboard.draw();
-            manager.draw();
-        window.display();
+    window.clear();
+        chessboard.draw();
+        manager.draw();
+    window.display();
 }
 
 
@@ -35,9 +35,9 @@ std::pair<int, int> wait_chosen_square(sf::RenderWindow &window, sf::Event &even
 }
 
 
-std::set<std::pair<int, int>> draw_available_squares(sf::RenderWindow &window, game_manager &manager, board &chessboard, piece *chosen_piece)
+std::set<std::pair<int, int>> draw_available_squares(sf::RenderWindow &window, game_manager &manager, board &chessboard,
+    piece *chosen_piece, std::set<std::pair<int, int>> &available_squares)
 {
-    std::set<std::pair<int, int>> available_squares;
     chosen_piece->available_squares(chessboard, available_squares);
 
     chessboard.squares_[chosen_piece->x_][chosen_piece->y_].change_frame(PURPLE_SQUARE);
@@ -49,7 +49,7 @@ std::set<std::pair<int, int>> draw_available_squares(sf::RenderWindow &window, g
     chessboard.squares_[chosen_piece->x_][chosen_piece->y_].change_frame(NORMAL_SQUARE);
     for (std::pair<int, int> square: available_squares)
         chessboard.squares_[square.first][square.second].change_frame(NORMAL_SQUARE);
-    
+
     return available_squares;
 }
 
@@ -71,9 +71,8 @@ int move(sf::RenderWindow &window, sf::Event &event,
             return EXIT;
         first_piece = chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
     }
-
     
-    available_squares = draw_available_squares(window, manager, chessboard, first_piece);
+    available_squares = draw_available_squares(window, manager, chessboard, first_piece, available_squares);
 
     do
     {
@@ -84,7 +83,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
         if (second_piece && second_piece->color_ == turn_color)
         {
             first_piece = second_piece;
-            available_squares = draw_available_squares(window, manager, chessboard, first_piece);
+            available_squares = draw_available_squares(window, manager, chessboard, first_piece, available_squares);
         }
     }
     while (available_squares.find(chosen_square) == available_squares.end());

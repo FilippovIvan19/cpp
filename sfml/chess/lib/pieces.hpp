@@ -9,7 +9,7 @@ public:
 
     Kind kind_;
 
-    virtual void available_squares(board &chessboard, std::set<std::pair<int, int>> &squares) = 0;
+    virtual std::set<std::pair<int, int>> &available_squares(board &chessboard, std::set<std::pair<int, int>> &squares) = 0;
     void relocate(int x, int y, board &chessboard);
 };
 
@@ -19,6 +19,7 @@ piece::piece(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &t
     {
         this->sprite_ = sf::Sprite(texture);
         this->sprite_.setTextureRect(sf::IntRect(this->kind_ * PIC_W, this->color_ * PIC_H, PIC_W, PIC_H));
+        this->sprite_.setOrigin(-(PIC_H - PIC_W) * SQUARE_SIZE / PIC_H / 2, 0);//центровка?
         this->sprite_.setScale
             (SQUARE_SIZE / this->sprite_.getGlobalBounds().height,
              SQUARE_SIZE / this->sprite_.getGlobalBounds().height);
