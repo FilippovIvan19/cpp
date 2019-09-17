@@ -1,9 +1,17 @@
 void draw_all(sf::RenderWindow &window, game_manager &manager, board &chessboard)
 {
+    if (manager.white_king_->checked(chessboard))
+        chessboard.squares_[manager.white_king_->x_][manager.white_king_->y_].change_frame(RED_SQUARE);
+    if (manager.black_king_->checked(chessboard))
+        chessboard.squares_[manager.black_king_->x_][manager.black_king_->y_].change_frame(RED_SQUARE);
+
     window.clear();
         chessboard.draw();
         manager.draw();
     window.display();
+
+    chessboard.squares_[manager.white_king_->x_][manager.white_king_->y_].change_frame(NORMAL_SQUARE);
+    chessboard.squares_[manager.black_king_->x_][manager.black_king_->y_].change_frame(NORMAL_SQUARE);
 }
 
 
@@ -35,22 +43,18 @@ std::pair<int, int> wait_chosen_square(sf::RenderWindow &window, sf::Event &even
 }
 
 
-std::set<std::pair<int, int>> draw_available_squares(sf::RenderWindow &window, game_manager &manager, board &chessboard,
-    piece *chosen_piece, std::set<std::pair<int, int>> &available_squares)
+void draw_available_squares(sf::RenderWindow &window, game_manager &manager, board &chessboard,
+    piece *chosen_piece)
 {
-    chosen_piece->available_squares(chessboard, available_squares);
-
     chessboard.squares_[chosen_piece->x_][chosen_piece->y_].change_frame(PURPLE_SQUARE);
-    for (std::pair<int, int> square: available_squares)
+    for (std::pair<int, int> square: chosen_piece->available_squares_)
         chessboard.squares_[square.first][square.second].change_frame(GREEN_SQUARE);
 
     draw_all(window, manager, chessboard);
 
     chessboard.squares_[chosen_piece->x_][chosen_piece->y_].change_frame(NORMAL_SQUARE);
-    for (std::pair<int, int> square: available_squares)
+    for (std::pair<int, int> square: chosen_piece->available_squares_)
         chessboard.squares_[square.first][square.second].change_frame(NORMAL_SQUARE);
-
-    return available_squares;
 }
 
 
@@ -62,7 +66,8 @@ int move(sf::RenderWindow &window, sf::Event &event,
     std::pair<int, int> chosen_square = std::pair<int, int>(-1, -1);
     piece *first_piece = nullptr;
     piece *second_piece = nullptr;
-    std::set<std::pair<int, int>> available_squares;
+
+    manager.update_available_squares(chessboard);
 
     while (!first_piece || first_piece->color_ != turn_color)
     {
@@ -72,7 +77,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
         first_piece = chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
     }
     
-    available_squares = draw_available_squares(window, manager, chessboard, first_piece, available_squares);
+    draw_available_squares(window, manager, chessboard, first_piece);
 
     do
     {
@@ -83,20 +88,17 @@ int move(sf::RenderWindow &window, sf::Event &event,
         if (second_piece && second_piece->color_ == turn_color)
         {
             first_piece = second_piece;
-            available_squares = draw_available_squares(window, manager, chessboard, first_piece, available_squares);
+            draw_available_squares(window, manager, chessboard, first_piece);
         }
     }
-    while (available_squares.find(chosen_square) == available_squares.end());
+    while (first_piece->available_squares_.find(chosen_square) == first_piece->available_squares_.end());
 
-    if (second_piece)
-    {
-        delete(second_piece);
-        manager.game_objects_.erase(second_piece);
-    }
-
-    first_piece->relocate(chosen_square.first, chosen_square.second, chessboard);
+    relocate(first_piece, chosen_square.first, chosen_square.second, manager, chessboard);
 
     draw_all(window, manager, chessboard);
+
+    // printf("white %d %d\n", manager.white_king_->x_, manager.white_king_->y_);
+    // printf("black %d %d\n\n", manager.black_king_->x_, manager.black_king_->y_);
 
     return 0;
 }

@@ -1,3 +1,5 @@
+class king;
+
 class game_manager
 {
 public:
@@ -5,14 +7,19 @@ public:
    ~game_manager();
 
     std::set<piece*> game_objects_;
+    king *white_king_;
+    king *black_king_;
 
     void draw();
     void add_obj(piece *obj_ptr);
     void clear();
+    void update_available_squares(board &chessboard);
 };
 
 game_manager::game_manager():
-game_objects_(std::set<piece*> ())
+game_objects_(std::set<piece*> ()),
+white_king_(nullptr),
+black_king_(nullptr)
 {}
 
 game_manager::~game_manager()
@@ -21,12 +28,23 @@ game_manager::~game_manager()
 void game_manager::add_obj(piece *obj_ptr)
 {
     this->game_objects_.insert(obj_ptr);
+    if (obj_ptr->kind_ == KING)
+        if (obj_ptr->color_ == WHITE)
+            white_king_ = dynamic_cast<king*>(obj_ptr);
+        else
+            black_king_ = dynamic_cast<king*>(obj_ptr);
 }
 
 void game_manager::draw()
 {
     for (piece *obj: this->game_objects_)
         obj->draw();
+}
+
+void game_manager::update_available_squares(board &chessboard)
+{
+    for (piece *obj: this->game_objects_)
+        obj->update_available_squares(*this, chessboard);
 }
 
 void game_manager::clear()

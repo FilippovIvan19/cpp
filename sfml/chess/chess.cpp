@@ -30,9 +30,13 @@ enum Kind
 };
 
 #include "lib/common_elements.hpp"
+
 #include "lib/board.hpp"
 #include "lib/pieces.hpp"
+#include "lib/many_classes.hpp"
 #include "lib/game_manager.hpp"
+
+#include "lib/moving.hpp"
 #include "lib/game_logic.hpp"
 
 

@@ -1,3 +1,4 @@
+class game_manager;
 
 #define MAKE_CLASS(name, const_name)                                                                                \
                                                                                                                     \
@@ -6,7 +7,7 @@ class name: public piece                                                        
 public:                                                                                                             \
     name(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard);            \
    ~name() {};                                                                                                     \
-    virtual std::set<std::pair<int, int>> &available_squares(board &chessboard, std::set<std::pair<int, int>> &squares);                      \
+    virtual void update_available_squares(game_manager &manager, board &chessboard);                      \
 };                                                                                                                  \
                                                                                                                     \
 name::name(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard):         \
@@ -14,12 +15,27 @@ name::name(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &tex
     {}                                                                                                              
 
 
+
+
 MAKE_CLASS(pawn, PAWN)
 MAKE_CLASS(castle, CASTLE)
 MAKE_CLASS(knight, KNIGHT)
 MAKE_CLASS(bishop, BISHOP)
 MAKE_CLASS(queen, QUEEN)
-MAKE_CLASS(king, KING)
+// MAKE_CLASS(king, KING)
 
+
+class king: public piece
+{
+public:
+    king(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard);
+   ~king() {};
+    virtual void update_available_squares(game_manager &manager, board &chessboard);
+    bool checked(board &chessboard);
+};
+
+king::king(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard):
+    piece(window, color, x, y, texture, chessboard, KING)
+    {}  
 
 #undef MAKE_CLASS

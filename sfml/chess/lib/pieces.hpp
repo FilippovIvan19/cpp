@@ -1,5 +1,6 @@
 #include <set>
 
+class game_manager;
 
 class piece: public common_elements
 {
@@ -8,14 +9,16 @@ public:
    ~piece() {};
 
     Kind kind_;
+    std::set<std::pair<int, int>> available_squares_;
 
-    virtual std::set<std::pair<int, int>> &available_squares(board &chessboard, std::set<std::pair<int, int>> &squares) = 0;
+    virtual void update_available_squares(game_manager &manager, board &chessboard) = 0;
     void relocate(int x, int y, board &chessboard);
 };
 
 piece::piece(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard, Kind kind):
     common_elements(window, color, x, y),
-    kind_(kind)
+    kind_(kind),
+    available_squares_(std::set<std::pair<int, int>>())
     {
         this->sprite_ = sf::Sprite(texture);
         this->sprite_.setTextureRect(sf::IntRect(this->kind_ * PIC_W, this->color_ * PIC_H, PIC_W, PIC_H));
@@ -35,7 +38,3 @@ void piece::relocate(int x, int y, board &chessboard)
     this->sprite_.setPosition(x * SQUARE_SIZE, y * SQUARE_SIZE);
     chessboard.squares_[x][y].piece_ptr_ = this;
 }
-
-
-#include "many_classes.hpp"
-#include "moving.hpp"
