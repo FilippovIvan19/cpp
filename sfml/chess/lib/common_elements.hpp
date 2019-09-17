@@ -3,7 +3,7 @@ class common_elements
 public:
     common_elements(sf::RenderWindow *window_ptr, Color color, int x, int y);
     common_elements();
-   ~common_elements();
+   ~common_elements() {};
 
     int x_;
     int y_;
@@ -27,9 +27,6 @@ common_elements::common_elements():
     window_ptr_(nullptr),
     color_(WHITE)
     {}
-
-common_elements::~common_elements()
-{}
 
 void common_elements::draw()
 {

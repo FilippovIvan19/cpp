@@ -1,7 +1,3 @@
-#include <set>
-
-class game_manager;
-
 class piece: public common_elements
 {
 public:

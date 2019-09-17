@@ -94,12 +94,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
     while (first_piece->available_squares_.find(chosen_square) == first_piece->available_squares_.end());
 
     relocate(first_piece, chosen_square.first, chosen_square.second, manager, chessboard);
-
     draw_all(window, manager, chessboard);
-
-    // printf("white %d %d\n", manager.white_king_->x_, manager.white_king_->y_);
-    // printf("black %d %d\n\n", manager.black_king_->x_, manager.black_king_->y_);
-
     return 0;
 }
 

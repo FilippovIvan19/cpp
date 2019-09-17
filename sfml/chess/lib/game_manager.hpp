@@ -1,10 +1,8 @@
-class king;
-
 class game_manager
 {
 public:
     game_manager();
-   ~game_manager();
+   ~game_manager() {};
 
     std::set<piece*> game_objects_;
     king *white_king_;
@@ -17,13 +15,10 @@ public:
 };
 
 game_manager::game_manager():
-game_objects_(std::set<piece*> ()),
-white_king_(nullptr),
-black_king_(nullptr)
-{}
-
-game_manager::~game_manager()
-{}
+    game_objects_(std::set<piece*> ()),
+    white_king_(nullptr),
+    black_king_(nullptr)
+    {}
 
 void game_manager::add_obj(piece *obj_ptr)
 {

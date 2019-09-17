@@ -29,8 +29,6 @@
 #define INSERT(x, y) this->available_squares_.insert(std::pair<int, int>(x, y))
 
 
-
-
 void relocate(piece *first_piece, int x, int y, game_manager &manager, board &chessboard)
 {
     piece *second_piece = chessboard.squares_[x][y].piece_ptr_;
@@ -42,7 +40,6 @@ void relocate(piece *first_piece, int x, int y, game_manager &manager, board &ch
 
     first_piece->relocate(x, y, chessboard);
 }
-
 
 
 bool make_shah(game_manager &manager, 

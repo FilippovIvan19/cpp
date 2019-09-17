@@ -1,43 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <SFML/Graphics.hpp>
+#include <set>
 
-const int WINDOW_WIDTH  = 800;
-const int WINDOW_HEIGHT = 800;
-const int SQUARE_SIZE  = 100;
-const int PIC_H = 163;
-const int PIC_W = 83;
-const int NORMAL_SQUARE = 0;
-const int GREEN_SQUARE = 1;
-const int RED_SQUARE = 2;
-const int PURPLE_SQUARE = 3;
-const int EXIT = -666;
 
-enum Color
-{
-    BLACK = 0,
-    WHITE
-};
-
-enum Kind
-{
-    PAWN = 0,
-    CASTLE,
-    KNIGHT,
-    BISHOP,
-    QUEEN,
-    KING
-};
-
-#include "lib/common_elements.hpp"
-
-#include "lib/board.hpp"
-#include "lib/pieces.hpp"
-#include "lib/many_classes.hpp"
-#include "lib/game_manager.hpp"
-
-#include "lib/moving.hpp"
-#include "lib/game_logic.hpp"
+#include "lib/big_include.hpp"
 
 
 void create_all_pieces(sf::RenderWindow &window, sf::Texture &pieces_texture, 
