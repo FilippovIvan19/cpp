@@ -1,8 +1,10 @@
 void draw_all(sf::RenderWindow &window, game_manager &manager, board &chessboard)
 {
-    if (manager.white_king_->checked(chessboard))
+    if (manager.white_king_->checked(chessboard) &&
+        chessboard.squares_[manager.white_king_->x_][manager.white_king_->y_].frame_ != PURPLE_SQUARE)
         chessboard.squares_[manager.white_king_->x_][manager.white_king_->y_].change_frame(RED_SQUARE);
-    if (manager.black_king_->checked(chessboard))
+    if (manager.black_king_->checked(chessboard) &&
+        chessboard.squares_[manager.black_king_->x_][manager.black_king_->y_].frame_ != PURPLE_SQUARE)
         chessboard.squares_[manager.black_king_->x_][manager.black_king_->y_].change_frame(RED_SQUARE);
 
     window.clear();
@@ -15,9 +17,23 @@ void draw_all(sf::RenderWindow &window, game_manager &manager, board &chessboard
 }
 
 
-bool game_over(game_manager &manager)
+int is_game_over(game_manager &manager, board &chessboard)
 {
-    return false;//////////////////////////////
+    if (manager.white_king_->checked(chessboard))
+    {
+        for (piece *cur_piece: manager.game_objects_)
+            if (cur_piece->color_ == WHITE && !cur_piece->available_squares_.empty())
+                return 0;
+        return BLACK_WIN;
+    }
+
+    if (manager.black_king_->checked(chessboard))
+    {
+        for (piece *cur_piece: manager.game_objects_)
+            if (cur_piece->color_ == BLACK && !cur_piece->available_squares_.empty())
+                return 0;
+        return WHITE_WIN;
+    }
 }
 
 
@@ -67,8 +83,6 @@ int move(sf::RenderWindow &window, sf::Event &event,
     piece *first_piece = nullptr;
     piece *second_piece = nullptr;
 
-    manager.update_available_squares(chessboard);
-
     while (!first_piece || first_piece->color_ != turn_color)
     {
         chosen_square = wait_chosen_square(window, event, chessboard);
@@ -99,13 +113,50 @@ int move(sf::RenderWindow &window, sf::Event &event,
 }
 
 
+void end_game(sf::RenderWindow &window, game_manager &manager, board &chessboard, int game_over)
+{
+    sf::Font font;
+    font.loadFromFile("textures/font.otf");
+    char text_str[15] = "";
+
+    switch (game_over)
+        {
+            case WHITE_WIN:
+                window.setTitle("WHITE WIN");
+                strcpy(text_str, "white win");
+                break;
+
+            case BLACK_WIN:
+                window.setTitle("BLACK WIN");
+                strcpy(text_str, "black win");
+                break;
+
+            default:
+                assert(0);
+        }
+
+
+    sf::Text text(text_str, font, 80);
+    text.setOutlineThickness(5);
+    text.setOutlineColor(sf::Color::White);
+    text.setFillColor(sf::Color::Red);
+    text.setPosition(200, 350);
+
+    window.clear();
+        chessboard.draw();
+        manager.draw();
+        window.draw(text);
+    window.display();
+}
+
+
 void game_cycle(sf::RenderWindow &window, sf::Event &event, 
     game_manager &manager, board &chessboard)
 {
     Color turn_color = WHITE;
     draw_all(window, manager, chessboard);
 
-    while (window.isOpen() && !game_over(manager))
+    while (window.isOpen())
     {
         while (window.pollEvent(event))
             if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
@@ -114,8 +165,20 @@ void game_cycle(sf::RenderWindow &window, sf::Event &event,
                 return;
             }
 
-        if (move(window, event, manager, chessboard, turn_color) == EXIT)
+
+        manager.update_available_squares(chessboard);
+        int game_over = is_game_over(manager, chessboard);
+        if (!game_over)
+            if (move(window, event, manager, chessboard, turn_color) == EXIT)
+            {
+                window.close();
+                return;
+            }
+            else {}
+        else
         {
+            end_game(window, manager, chessboard, game_over);
+            wait_chosen_square(window, event, chessboard);
             window.close();
             return;
         }

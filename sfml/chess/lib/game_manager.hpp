@@ -7,6 +7,7 @@ public:
     std::set<piece*> game_objects_;
     king *white_king_;
     king *black_king_;
+    piece *jumped_pawn_;
 
     void draw();
     void add_obj(piece *obj_ptr);
@@ -16,6 +17,7 @@ public:
 
 game_manager::game_manager():
     game_objects_(std::set<piece*> ()),
+    jumped_pawn_(nullptr),
     white_king_(nullptr),
     black_king_(nullptr)
     {}

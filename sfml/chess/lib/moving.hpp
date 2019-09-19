@@ -31,6 +31,43 @@
 
 void relocate(piece *first_piece, int x, int y, game_manager &manager, board &chessboard)
 {
+    if (first_piece->kind_ == KING && abs(x - first_piece->x_) == 2)
+        switch (x)
+        {
+            case 2:
+                chessboard.squares_[0][y].piece_ptr_->relocate(3, y, chessboard);
+                chessboard.squares_[3][y].piece_ptr_->was_relocated_ = true;
+                break;
+            case 6:
+                chessboard.squares_[7][y].piece_ptr_->relocate(5, y, chessboard);
+                chessboard.squares_[5][y].piece_ptr_->was_relocated_ = true;
+                break;
+            default:
+                assert(0);
+        }
+
+    if (first_piece->kind_ == PAWN && abs(x - first_piece->x_) == 1 && !chessboard.squares_[x][y].piece_ptr_)
+        switch (y)
+        {
+            case 2:
+                delete(chessboard.squares_[x][3].piece_ptr_);
+                manager.game_objects_.erase(chessboard.squares_[x][3].piece_ptr_);
+                chessboard.squares_[x][3].piece_ptr_ = nullptr;
+                break;
+            case 6:
+                delete(chessboard.squares_[x][5].piece_ptr_);
+                manager.game_objects_.erase(chessboard.squares_[x][5].piece_ptr_);
+                chessboard.squares_[x][5].piece_ptr_ = nullptr;
+                break;
+            default:
+                assert(0);
+        }
+
+    if (first_piece->kind_ == PAWN && abs(y - first_piece->y_) == 2)
+        manager.jumped_pawn_ = first_piece;
+    else
+        manager.jumped_pawn_ = nullptr;
+
     piece *second_piece = chessboard.squares_[x][y].piece_ptr_;
     if (second_piece)
     {
@@ -39,6 +76,7 @@ void relocate(piece *first_piece, int x, int y, game_manager &manager, board &ch
     }
 
     first_piece->relocate(x, y, chessboard);
+    first_piece->was_relocated_ = true;
 }
 
 
@@ -82,7 +120,7 @@ MOVING(pawn)
 
     int dy = (color == WHITE)? -1: 1;
 
-    if((y0 - dy) % 7 == 0 && IS_EMPTY(x0, y0 + 2 * dy))
+    if((y0 - dy) % 7 == 0 && IS_EMPTY(x0, y0 + dy) && IS_EMPTY(x0, y0 + 2 * dy))
         INSERT(x0, y0 + 2 * dy);
 
     if (IS_EMPTY(x0, y0 + dy))
@@ -91,8 +129,12 @@ MOVING(pawn)
     for (int i = -1; i <= 1; i += 2)
         if (IS_AVAILABLE(x0 + i, y0 + dy))
             INSERT(x0 + i, y0 + dy);
-    
-    /////////////////////взятие на перехвате
+        else if (IS_EMPTY(x0 + i, y0 + dy) && manager.jumped_pawn_ &&
+            manager.jumped_pawn_->x_ == x0 + i &&
+            manager.jumped_pawn_->y_ == y0)
+            INSERT(x0 + i, y0 + dy);
+
+
     // ферзь
     
     check_squares(manager, chessboard, this->available_squares_, x0, y0);
@@ -229,7 +271,21 @@ MOVING(king)
             if (IS_EMPTY(x0 + dx, y0 + dy) || IS_AVAILABLE(x0 + dx, y0 + dy))
                 INSERT(x0 + dx, y0 + dy);
 
-    //рокировка
+
+    check_squares(manager, chessboard, this->available_squares_, x0, y0);
+
+    if (!this->was_relocated_ && !this->checked(chessboard))
+    {
+        if (IS_EMPTY(x0 - 1, y0) && IS_EMPTY(x0 - 2, y0) && IS_EMPTY(x0 - 3, y0) && 
+            chessboard.squares_[0][y0].piece_ptr_ && !chessboard.squares_[0][y0].piece_ptr_->was_relocated_ &&
+            this->available_squares_.find(std::pair<int, int>(x0 - 1, y0)) != this->available_squares_.end())
+            INSERT(x0 - 2, y0);
+
+        if (IS_EMPTY(x0 + 1, y0) && IS_EMPTY(x0 + 2, y0) && 
+            chessboard.squares_[7][y0].piece_ptr_ && !chessboard.squares_[7][y0].piece_ptr_->was_relocated_ &&
+            this->available_squares_.find(std::pair<int, int>(x0 + 1, y0)) != this->available_squares_.end())
+            INSERT(x0 + 2, y0);
+    }
 
     check_squares(manager, chessboard, this->available_squares_, x0, y0);
 }

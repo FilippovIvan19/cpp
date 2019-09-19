@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <SFML/Graphics.hpp>
-#include <set>
-
-
 #include "lib/big_include.hpp"
 
 
@@ -50,7 +44,6 @@ int main(int argc, char const *argv[])
     sf::Texture pieces_texture;
     pieces_texture.loadFromFile("textures/pieces.png");
     pieces_texture.setSmooth(true);
-    
 
     game_manager manager;
 

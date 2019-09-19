@@ -13,7 +13,7 @@ public:
 
 square::square(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture):
     common_elements(window, color, x, y),
-    frame_(0),
+    frame_(NORMAL_SQUARE),
     piece_ptr_(nullptr)
     {        
         this->sprite_ = sf::Sprite(texture);
@@ -23,7 +23,7 @@ square::square(sf::RenderWindow *window, Color color, int x, int y, sf::Texture 
 
 square::square():
     common_elements(),
-    frame_(0),
+    frame_(NORMAL_SQUARE),
     piece_ptr_(nullptr)
     {}
 

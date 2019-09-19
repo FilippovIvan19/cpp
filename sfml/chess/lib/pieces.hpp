@@ -6,6 +6,7 @@ public:
 
     Kind kind_;
     std::set<std::pair<int, int>> available_squares_;
+    bool was_relocated_;
 
     virtual void update_available_squares(game_manager &manager, board &chessboard) = 0;
     void relocate(int x, int y, board &chessboard);
@@ -14,7 +15,8 @@ public:
 piece::piece(sf::RenderWindow *window, Color color, int x, int y, sf::Texture &texture, board &chessboard, Kind kind):
     common_elements(window, color, x, y),
     kind_(kind),
-    available_squares_(std::set<std::pair<int, int>>())
+    available_squares_(std::set<std::pair<int, int>>()),
+    was_relocated_(false)
     {
         this->sprite_ = sf::Sprite(texture);
         this->sprite_.setTextureRect(sf::IntRect(this->kind_ * PIC_W, this->color_ * PIC_H, PIC_W, PIC_H));

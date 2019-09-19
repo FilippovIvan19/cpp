@@ -3,11 +3,14 @@ const int WINDOW_HEIGHT = 800;
 const int SQUARE_SIZE  = 100;
 const int PIC_H = 163;
 const int PIC_W = 83;
+const int EXIT = -666;
+const int WHITE_WIN = 1;
+const int BLACK_WIN = 2;
+
 const int NORMAL_SQUARE = 0;
 const int GREEN_SQUARE = 1;
 const int RED_SQUARE = 2;
 const int PURPLE_SQUARE = 3;
-const int EXIT = -666;
 
 enum Color
 {
