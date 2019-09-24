@@ -37,28 +37,6 @@ int is_game_over(game_manager &manager, board &chessboard)
 }
 
 
-std::pair<int, int> wait_chosen_square(sf::RenderWindow &window, sf::Event &event, board &chessboard)
-{
-    while (window.waitEvent(event))
-    {
-        if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-        {
-            window.close();
-            return std::pair<int, int> (EXIT, EXIT);
-        }
-
-        if (event.type == sf::Event::MouseButtonPressed &&
-            event.mouseButton.button == sf::Mouse::Left)
-        {
-            int mouse_x = event.mouseButton.x / SQUARE_SIZE;
-            int mouse_y = event.mouseButton.y / SQUARE_SIZE;
-
-            return std::pair<int, int> (mouse_x, mouse_y);
-        }
-    }
-}
-
-
 void draw_available_squares(sf::RenderWindow &window, game_manager &manager, board &chessboard,
     piece *chosen_piece)
 {
@@ -85,7 +63,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
 
     while (!first_piece || first_piece->color_ != turn_color)
     {
-        chosen_square = wait_chosen_square(window, event, chessboard);
+        chosen_square = wait_chosen_square(window, event);
         if (chosen_square == std::pair<int, int>(EXIT, EXIT))
             return EXIT;
         first_piece = chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
@@ -95,7 +73,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
 
     do
     {
-        chosen_square = wait_chosen_square(window, event, chessboard);
+        chosen_square = wait_chosen_square(window, event);
         if (chosen_square == std::pair<int, int>(EXIT, EXIT))
             return EXIT;
         second_piece = chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
@@ -107,7 +85,7 @@ int move(sf::RenderWindow &window, sf::Event &event,
     }
     while (first_piece->available_squares_.find(chosen_square) == first_piece->available_squares_.end());
 
-    relocate(first_piece, chosen_square.first, chosen_square.second, manager, chessboard);
+    relocate(first_piece, chosen_square.first, chosen_square.second, manager, chessboard, event);
     draw_all(window, manager, chessboard);
     return 0;
 }
@@ -178,7 +156,7 @@ void game_cycle(sf::RenderWindow &window, sf::Event &event,
         else
         {
             end_game(window, manager, chessboard, game_over);
-            wait_chosen_square(window, event, chessboard);
+            wait_chosen_square(window, event);
             window.close();
             return;
         }

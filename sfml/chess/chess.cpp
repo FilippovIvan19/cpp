@@ -53,6 +53,5 @@ int main(int argc, char const *argv[])
     sf::Event event;
     game_cycle(window, event, manager, chessboard);
 
-    manager.clear();
     return 0;
 }

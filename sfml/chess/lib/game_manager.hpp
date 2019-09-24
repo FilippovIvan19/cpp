@@ -2,7 +2,7 @@ class game_manager
 {
 public:
     game_manager();
-   ~game_manager() {};
+   ~game_manager();
 
     std::set<piece*> game_objects_;
     king *white_king_;
@@ -11,7 +11,6 @@ public:
 
     void draw();
     void add_obj(piece *obj_ptr);
-    void clear();
     void update_available_squares(board &chessboard);
 };
 
@@ -44,7 +43,7 @@ void game_manager::update_available_squares(board &chessboard)
         obj->update_available_squares(*this, chessboard);
 }
 
-void game_manager::clear()
+game_manager::~game_manager()
 {
     for (piece *obj: this->game_objects_)
         delete(obj);

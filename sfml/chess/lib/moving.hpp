@@ -29,7 +29,104 @@
 #define INSERT(x, y) this->available_squares_.insert(std::pair<int, int>(x, y))
 
 
-void relocate(piece *first_piece, int x, int y, game_manager &manager, board &chessboard)
+std::pair<int, int> wait_chosen_square(sf::RenderWindow &window, sf::Event &event)
+{
+    while (window.waitEvent(event))
+    {
+        if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+        {
+            window.close();
+            return std::pair<int, int> (EXIT, EXIT);
+        }
+
+        if (event.type == sf::Event::MouseButtonPressed &&
+            event.mouseButton.button == sf::Mouse::Left)
+        {
+            int mouse_x = event.mouseButton.x / SQUARE_SIZE;
+            int mouse_y = event.mouseButton.y / SQUARE_SIZE;
+
+            return std::pair<int, int> (mouse_x, mouse_y);
+        }
+    }
+}
+
+
+void fill_manager_for_choise(sf::RenderWindow *window_ptr, sf::Texture &pieces_texture, 
+    game_manager &manager_for_choise, board &empty_chessboard)
+{
+    manager_for_choise.add_obj(new castle(window_ptr, WHITE, 0, 0, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new knight(window_ptr, WHITE, 1, 0, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new bishop(window_ptr, WHITE, 2, 0, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new  queen(window_ptr, WHITE, 3, 0, pieces_texture, empty_chessboard));
+
+    manager_for_choise.add_obj(new castle(window_ptr, BLACK, 0, 7, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new knight(window_ptr, BLACK, 1, 7, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new bishop(window_ptr, BLACK, 2, 7, pieces_texture, empty_chessboard));
+    manager_for_choise.add_obj(new  queen(window_ptr, BLACK, 3, 7, pieces_texture, empty_chessboard));
+}
+
+
+void pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::Event &event)
+{
+    Color color = cur_pawn->color_;
+
+    sf::RenderWindow *window_ptr = cur_pawn->window_ptr_;
+
+    static board empty_chessboard(window_ptr, (sf::Texture&)*chessboard.squares_[0][0].sprite_.getTexture());
+    static game_manager manager_for_choise;
+    if (manager_for_choise.game_objects_.empty())
+        fill_manager_for_choise(window_ptr, (sf::Texture&)*cur_pawn->sprite_.getTexture(),
+            manager_for_choise, empty_chessboard);
+
+    
+
+    window_ptr->clear();
+        empty_chessboard.draw();
+        for (piece *obj: manager_for_choise.game_objects_)
+            if (obj->color_ == color)
+    window_ptr->display();
+
+
+    std::pair<int, int> chosen_square;
+    piece *chosen_piece = nullptr;
+
+    do
+    {
+        chosen_square = wait_chosen_square(*window_ptr, event);
+        chosen_piece = empty_chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
+    }
+    while (!chosen_piece || chosen_piece->color_ != color);
+
+    piece *new_piece = nullptr;
+
+
+    switch (chosen_square.first)
+    {
+        case 0:
+            new_piece = new castle(window_ptr, color, (int)cur_pawn->x_, (int)cur_pawn->y_, (sf::Texture&)*cur_pawn->sprite_.getTexture(), chessboard);
+            break;
+        case 1:
+            new_piece = new knight(window_ptr, color, (int)cur_pawn->x_, (int)cur_pawn->y_, (sf::Texture&)*cur_pawn->sprite_.getTexture(), chessboard);
+            break;
+        case 2:
+            new_piece = new bishop(window_ptr, color, (int)cur_pawn->x_, (int)cur_pawn->y_, (sf::Texture&)*cur_pawn->sprite_.getTexture(), chessboard);
+            break;
+        case 3:
+            new_piece = new  queen(window_ptr, color, (int)cur_pawn->x_, (int)cur_pawn->y_, (sf::Texture&)*cur_pawn->sprite_.getTexture(), chessboard);
+            break;
+        default:
+            assert(0);
+    }
+
+    manager.add_obj(new_piece);
+
+
+    manager.game_objects_.erase(cur_pawn);
+    delete(cur_pawn);
+}
+
+
+void relocate(piece *first_piece, int x, int y, game_manager &manager, board &chessboard, sf::Event &event)
 {
     if (first_piece->kind_ == KING && abs(x - first_piece->x_) == 2)
         switch (x)
@@ -77,6 +174,9 @@ void relocate(piece *first_piece, int x, int y, game_manager &manager, board &ch
 
     first_piece->relocate(x, y, chessboard);
     first_piece->was_relocated_ = true;
+
+    if (first_piece->kind_ == PAWN && y % 7 == 0)
+        pawn_reborn(first_piece, manager, chessboard, event);
 }
 
 
@@ -134,8 +234,6 @@ MOVING(pawn)
             manager.jumped_pawn_->y_ == y0)
             INSERT(x0 + i, y0 + dy);
 
-
-    // ферзь
     
     check_squares(manager, chessboard, this->available_squares_, x0, y0);
 }
