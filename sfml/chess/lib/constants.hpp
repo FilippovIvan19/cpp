@@ -6,6 +6,7 @@ const int PIC_W = 83;
 const int EXIT = -666;
 const int WHITE_WIN = 1;
 const int BLACK_WIN = 2;
+const int STALEMATE = 3;
 
 const int NORMAL_SQUARE = 0;
 const int GREEN_SQUARE = 1;

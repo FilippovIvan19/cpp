@@ -66,7 +66,7 @@ void fill_manager_for_choise(sf::RenderWindow *window_ptr, sf::Texture &pieces_t
 }
 
 
-void pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::Event &event)
+int pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::Event &event)
 {
     Color color = cur_pawn->color_;
 
@@ -76,16 +76,14 @@ void pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::
     static game_manager manager_for_choise;
     if (manager_for_choise.game_objects_.empty())
         fill_manager_for_choise(window_ptr, (sf::Texture&)*cur_pawn->sprite_.getTexture(),
-            manager_for_choise, empty_chessboard);
-
-    
+            manager_for_choise, empty_chessboard);    
 
     window_ptr->clear();
-        empty_chessboard.draw();
+        chessboard.draw();
         for (piece *obj: manager_for_choise.game_objects_)
             if (obj->color_ == color)
+                obj->draw();
     window_ptr->display();
-
 
     std::pair<int, int> chosen_square;
     piece *chosen_piece = nullptr;
@@ -93,6 +91,9 @@ void pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::
     do
     {
         chosen_square = wait_chosen_square(*window_ptr, event);
+        if (chosen_square == std::pair<int, int>(EXIT, EXIT))
+            return EXIT;
+
         chosen_piece = empty_chessboard.squares_[chosen_square.first][chosen_square.second].piece_ptr_;
     }
     while (!chosen_piece || chosen_piece->color_ != color);

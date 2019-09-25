@@ -17,23 +17,44 @@ void draw_all(sf::RenderWindow &window, game_manager &manager, board &chessboard
 }
 
 
-int is_game_over(game_manager &manager, board &chessboard)
+int is_game_over(Color cur_color, game_manager &manager, board &chessboard)
 {
-    if (manager.white_king_->checked(chessboard))
+    // if (manager.white_king_->checked(chessboard))
+    // {
+    //     for (piece *cur_piece: manager.game_objects_)
+    //         if (cur_piece->color_ == WHITE && !cur_piece->available_squares_.empty())
+    //             return 0;
+    //     return BLACK_WIN;
+    // }
+
+    // if (manager.black_king_->checked(chessboard))
+    // {
+    //     for (piece *cur_piece: manager.game_objects_)
+    //         if (cur_piece->color_ == BLACK && !cur_piece->available_squares_.empty())
+    //             return 0;
+    //     return WHITE_WIN;
+    // }
+
+    for (piece *cur_piece: manager.game_objects_)
+        if (cur_piece->color_ == cur_color && !cur_piece->available_squares_.empty())
+            return 0;
+    if (cur_color == WHITE)
     {
-        for (piece *cur_piece: manager.game_objects_)
-            if (cur_piece->color_ == WHITE && !cur_piece->available_squares_.empty())
-                return 0;
-        return BLACK_WIN;
+        if (manager.white_king_->checked(chessboard))
+            return BLACK_WIN;
+        else
+            return STALEMATE;
+    }
+    else
+    {
+        if (manager.black_king_->checked(chessboard))
+            return WHITE_WIN;
+        else
+            return STALEMATE;
     }
 
-    if (manager.black_king_->checked(chessboard))
-    {
-        for (piece *cur_piece: manager.game_objects_)
-            if (cur_piece->color_ == BLACK && !cur_piece->available_squares_.empty())
-                return 0;
-        return WHITE_WIN;
-    }
+
+
 }
 
 
@@ -109,6 +130,11 @@ void end_game(sf::RenderWindow &window, game_manager &manager, board &chessboard
                 strcpy(text_str, "black win");
                 break;
 
+            case STALEMATE:
+                window.setTitle("DRAW");
+                strcpy(text_str, "draw");
+                break;
+
             default:
                 assert(0);
         }
@@ -145,7 +171,7 @@ void game_cycle(sf::RenderWindow &window, sf::Event &event,
 
 
         manager.update_available_squares(chessboard);
-        int game_over = is_game_over(manager, chessboard);
+        int game_over = is_game_over(turn_color, manager, chessboard);
         if (!game_over)
             if (move(window, event, manager, chessboard, turn_color) == EXIT)
             {
