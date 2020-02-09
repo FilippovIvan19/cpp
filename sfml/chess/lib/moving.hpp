@@ -29,13 +29,13 @@
 #define INSERT(x, y) this->available_squares_.insert(std::pair<int, int>(x, y))
 
 
-std::pair<int, int> wait_chosen_square(sf::RenderWindow &window, sf::Event &event)
+std::pair<int, int> wait_chosen_square(sf::RenderWindow *window_ptr, sf::Event &event)
 {
-    while (window.waitEvent(event))
+    while (window_ptr->waitEvent(event))
     {
         if (event.type == sf::Event::Closed || sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
         {
-            window.close();
+            window_ptr->close();
             return std::pair<int, int> (EXIT, EXIT);
         }
 
@@ -90,7 +90,7 @@ int pawn_reborn(piece *cur_pawn, game_manager &manager, board &chessboard, sf::E
 
     do
     {
-        chosen_square = wait_chosen_square(*window_ptr, event);
+        chosen_square = wait_chosen_square(window_ptr, event);
         if (chosen_square == std::pair<int, int>(EXIT, EXIT))
             return EXIT;
 
